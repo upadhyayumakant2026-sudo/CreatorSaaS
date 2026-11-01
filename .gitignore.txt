@@ -1,0 +1,7 @@
+statics/static/
+statics/uploads/
+statics/outputs/
+*.mp4
+*.zip
+__pycache__/
+client_secret.json
