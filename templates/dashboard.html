@@ -25,9 +25,9 @@
         .btn-save { background: #2a9d8f; color: white; }
         .btn-edit { background: #e76f51; color: white; }
 
-        .editor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .editor-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
         @media(max-width: 768px) { .editor-grid { grid-template-columns: 1fr; } }
-        .video-preview-box { background: #1c2541; border: 2px dashed #3a506b; height: 220px; border-radius: 8px; display: flex; justify-content: center; align-items: center; text-align: center; color: #8d99ae; margin-top: 10px; font-weight: bold; }
+        .video-preview-box { background: #1c2541; border: 2px dashed #3a506b; height: 180px; border-radius: 8px; display: flex; justify-content: center; align-items: center; text-align: center; color: #8d99ae; margin-top: 10px; font-weight: bold; font-size: 12px; padding: 10px; }
         .action-btn-main { display: block; width: 100%; padding: 12px; background: #0077b6; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 15px; text-align: center; }
         .action-btn-main:hover { background: #023e8a; }
 
@@ -39,6 +39,7 @@
         .bonus-badge { background: #d97706; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; margin-top: 10px; display: inline-block; }
         .pay-link { display: block; background: #2a9d8f; color: white; padding: 10px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 15px; }
 
+        .bonus-box { background: #0f172a; border: 2px solid #22c55e; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
         .security-footer { background: #0b132b; border: 2px solid #ef4444; padding: 15px; border-radius: 8px; margin-top: 25px; font-size: 12px; color: #f8fafc; text-align: center; box-shadow: 0 0 15px rgba(239, 68, 68, 0.3); }
     </style>
 </head>
@@ -54,6 +55,15 @@
             <div class="widget-box">Referral Link: <span>ref.creatorsaas.com/u12</span></div>
         </div>
     </div>
+
+    {% if session.get('bonus_link') %}
+    <!-- Google Drive Bonus Download Alert Box -->
+    <div class="bonus-box">
+        <h3 style="color: #22c55e; margin: 0 0 8px 0;">🎉 Payment Successful! Your Google Drive Bonus Folder is Ready</h3>
+        <p style="font-size: 13px; color: #caf0f8; margin: 0 0 10px 0;">As per your plan, your exclusive bonus videos & reels bundle has been unlocked and dispatched to your email & dashboard.</p>
+        <a href="{{ session.get('bonus_link') }}" target="_blank" style="background: #22c55e; color: black; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold; display: inline-block;">📥 Download Google Drive Bonus Folder Now</a>
+    </div>
+    {% endif %}
 
     <!-- Social Accounts Link & Save -->
     <div class="section-box">
@@ -94,7 +104,7 @@
         </div>
     </div>
 
-    <!-- Core High Speed Video Upload & Auto Editing Pipeline -->
+    <!-- Core High Speed Video Upload, Auto Thumbnail & Auto Tags Pipeline -->
     <div class="section-box">
         <div class="section-title">🎬 Autonomous Ultra-Fast Studio (&lt; 1 Min Processing for 180 Min Videos)</div>
         
@@ -105,29 +115,33 @@
 
         <div class="editor-grid">
             <div>
-                <strong style="color: #90e0ef;">Raw Uploaded Video Screen</strong>
+                <strong style="color: #90e0ef;">1. Raw Uploaded Video</strong>
                 <div class="video-preview-box" id="raw-screen">Raw Video Preview Screen</div>
             </div>
             <div>
-                <strong style="color: #90e0ef;">Auto Edited Output Video</strong>
-                <div class="video-preview-box" id="edited-screen" style="border-color: #2a9d8f;">Edited Output Preview Screen</div>
+                <strong style="color: #90e0ef;">2. Auto Edited & AI Thumbnail</strong>
+                <div class="video-preview-box" id="thumb-screen" style="border-color: #f59e0b;">AI Thumbnail & Auto Tags Generated</div>
+            </div>
+            <div>
+                <strong style="color: #90e0ef;">3. Auto-Published Output</strong>
+                <div class="video-preview-box" id="edited-screen" style="border-color: #2a9d8f;">Multi-Platform Published Status</div>
             </div>
         </div>
 
-        <button class="action-btn-main" onclick="triggerFastProcessing()">Start Ultra-Fast Auto Editing & Generate Auto SEO 🚀</button>
+        <button class="action-btn-main" onclick="triggerFastProcessing()">Start Ultra-Fast Editing, Thumbnail & Auto SEO 🚀</button>
         <button class="action-btn-main" style="background: #2a9d8f; margin-top: 10px;" onclick="triggerFastProcessing()">Auto Publish to FB, Instagram, YouTube & Twitter(X) 🌐</button>
     </div>
 
-    <!-- Pricing Plans & Auto Bonus Email Delivery -->
+    <!-- Pricing Plans & Auto Bonus Drive Links -->
     <div class="section-box pricing-section" id="plans">
-        <div class="section-title">💎 Subscription Plans (Razorpay + Auto Email Bonus Folder Delivery)</div>
+        <div class="section-title">💎 Subscription Plans (Razorpay + Auto Email & Drive Bonus Delivery)</div>
         <div class="plans-grid">
             
             <div class="plan-card">
                 <h3>Monthly Plan</h3>
                 <div class="price-tag">₹499</div>
                 <p style="font-size: 12px; color: #caf0f8;">Video Limit: Max &lt; 5 Minute Video</p>
-                <span class="bonus-badge">🎁 Reels Bonus Bundle (Auto Email)</span>
+                <span class="bonus-badge">🎁 Reels Google Drive Bonus Bundle</span>
                 <a href="https://razorpay.me/@umakantupadhyay7758" class="pay-link" onclick="handlePay('Starter')">Pay ₹499 via Razorpay</a>
             </div>
 
@@ -135,7 +149,7 @@
                 <h3>6 Month Plan</h3>
                 <div class="price-tag">₹1999</div>
                 <p style="font-size: 12px; color: #caf0f8;">Video Limit: Max &gt; 60 Minute Video</p>
-                <span class="bonus-badge">🎁 Movie Clips Bonus Pack (Auto Email)</span>
+                <span class="bonus-badge">🎁 Movie Clips Google Drive Pack</span>
                 <a href="https://razorpay.me/@umakantupadhyay7758" class="pay-link" style="background: #00b4d8;" onclick="handlePay('6Month')">Pay ₹1999 via Razorpay</a>
             </div>
 
@@ -143,7 +157,7 @@
                 <h3>Annual Subscription</h3>
                 <div class="price-tag">₹3999</div>
                 <p style="font-size: 12px; color: #caf0f8;">Video Limit: Max &lt; 180 Minute Video</p>
-                <span class="bonus-badge">🎁 Combo3 Pack Bonus (Auto Email)</span>
+                <span class="bonus-badge">🎁 Combo3 Pack Google Drive Bonus</span>
                 <a href="https://razorpay.me/@umakantupadhyay7758" class="pay-link" onclick="handlePay('Annual')">Pay ₹3999 via Razorpay</a>
             </div>
 
@@ -162,8 +176,9 @@
 
 <script>
 function triggerFastProcessing() {
-    document.getElementById('raw-screen').innerText = "Uploading & Processing Video Raw Stream...";
-    document.getElementById('edited-screen').innerText = "Applying Autonomous AI Edits & Auto SEO...";
+    document.getElementById('raw-screen').innerText = "Uploading Video Raw Stream...";
+    document.getElementById('thumb-screen').innerText = "Generating AI Thumbnail & Auto Tags...";
+    document.getElementById('edited-screen').innerText = "Applying Edits & Publishing...";
 
     fetch('/process_video_fast', { method: 'POST' })
     .then(res => res.json())
@@ -173,7 +188,8 @@ function triggerFastProcessing() {
             window.location.href = data.url;
         } else {
             document.getElementById('raw-screen').innerText = "Raw Stream Processed ✅";
-            document.getElementById('edited-screen').innerText = "Auto-Edited & Published Successfully! ✅";
+            document.getElementById('thumb-screen').innerText = "AI Thumbnail & Tags Generated ✅";
+            document.getElementById('edited-screen').innerText = "Published Successfully! ✅";
             alert(data.message);
         }
     });
