@@ -1,49 +1,73 @@
-<!-- === नया जोड़ने वाला ऑटोनॉमस थंबनेल और टैग जनरेटर मॉड्यूल === -->
-<div class="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-xl mt-6">
-    <h3 class="text-xl font-bold mb-4 text-yellow-400 flex items-center">
-        <i class="fas fa-magic mr-2"></i> Advanced Auto Thumbnail & Tag Generator
-    </h3>
+<!-- === 1. & 2. AUTO THUMBNAIL, TAG GENERATOR & TELEGRAM BRIDGE MODULE === -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
     
-    <div class="space-y-4">
-        <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1">Video Title / Topic</label>
-            <input type="text" id="videoTitleInput" placeholder="Enter video title for auto-optimization..." class="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-red-500">
-        </div>
-
-        <div class="flex space-x-4">
-            <button onclick="generateThumbnailAndTags()" class="flex-1 bg-red-600 hover:bg-red-700 font-bold py-3 px-4 rounded-lg transition shadow flex items-center justify-center space-x-2">
+    <!-- Feature A: Auto Thumbnail & SEO Tags Generator -->
+    <div class="bg-gray-800 border border-yellow-500 rounded-xl p-5 shadow-2xl">
+        <h3 class="text-lg font-bold text-yellow-400 mb-3 flex items-center">
+            <i class="fas fa-magic mr-2"></i> Auto Thumbnail & Viral Tags Generator
+        </h3>
+        <p class="text-xs text-gray-300 mb-3">वीडियो टाइटल दर्ज करें और तुरंत हाई-CTR थंबनेल कॉन्सेप्ट व वायरल एसईओ टैग्स प्राप्त करें।</p>
+        
+        <div class="space-y-3">
+            <input type="text" id="videoTitleInput" placeholder="Enter video title (e.g. Retro Bollywood Hits)..." class="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-yellow-500">
+            
+            <button onclick="generateThumbnailAndTags()" class="w-full bg-gradient-to-r from-red-600 to-yellow-500 hover:from-red-700 hover:to-yellow-600 font-bold py-2.5 px-4 rounded-lg text-sm text-white transition shadow flex items-center justify-center space-x-2">
                 <i class="fas fa-wand-magic-sparkles"></i>
-                <span>Generate High-CTR Thumbnail & Tags</span>
+                <span>Generate High-CTR Assets Now</span>
             </button>
         </div>
 
-        <!-- Output Preview Section -->
-        <div id="aiOutputBox" class="hidden mt-6 bg-gray-900 p-4 rounded-lg border border-gray-700">
-            <h4 class="text-sm font-bold text-yellow-400 mb-2"><i class="fas fa-check-circle"></i> AI Generated Assets:</h4>
-            <p id="conceptText" class="text-sm text-gray-300 mb-2"></p>
-            <div id="tagsContainer" class="flex flex-wrap gap-2"></div>
+        <!-- Dynamic Output Box -->
+        <div id="aiOutputBox" class="hidden mt-4 bg-gray-900 p-3 rounded-lg border border-gray-700">
+            <h4 class="text-xs font-bold text-yellow-400 mb-1"><i class="fas fa-check-circle"></i> Generated Output:</h4>
+            <p id="conceptText" class="text-xs text-gray-300 mb-2"></p>
+            <div id="tagsContainer" class="flex flex-wrap gap-1.5"></div>
         </div>
     </div>
+
+    <!-- Feature B: Telegram Community & Welcome Bridge -->
+    <div class="bg-gradient-to-r from-blue-900 to-gray-800 border border-blue-500 rounded-xl p-5 shadow-2xl flex flex-col justify-between">
+        <div>
+            <h3 class="text-lg font-bold text-white mb-2 flex items-center">
+                <i class="fab fa-telegram-plane text-blue-400 mr-2"></i> Telegram Community Onboarding
+            </h3>
+            <p class="text-xs text-gray-300 mb-4">प्लेटफॉर्म पर आने वाले हर नए यूजर और सब्सक्राइबर को सीधे आपके ऑफिशियल सीक्रेट कम्युनिटी ग्रुप से जोड़ने का डायरेक्ट ब्रिज।</p>
+        </div>
+        
+        <a href="https://t.me/+your_secret_creator_community_link" target="_blank" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg text-sm text-center transition shadow flex items-center justify-center space-x-2">
+            <i class="fab fa-telegram text-lg"></i>
+            <span>Join Secret Telegram Hub</span>
+        </a>
+    </div>
+
 </div>
 
-<!-- JavaScript Logic for Generator -->
+<!-- JavaScript Logic to Connect Backend API -->
 <script>
     async function generateThumbnailAndTags() {
-        const title = document.getElementById('videoTitleInput').value || "Viral Retro Cinematic Masterpiece";
-        const response = await fetch('/api/v1/generate-thumbnail-tags', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title: title })
-        });
-        const data = await response.json();
-        if (data.success) {
-            document.getElementById('aiOutputBox').classList.remove('hidden');
-            document.getElementById('conceptText').innerText = data.concept;
-            const tagsBox = document.getElementById('tagsContainer');
-            tagsBox.innerHTML = '';
-            data.tags.forEach(tag => {
-                tagsBox.innerHTML += `<span class="bg-gray-800 text-yellow-300 text-xs px-2.5 py-1 rounded-md border border-gray-700">#${tag}</span>`;
+        const titleInput = document.getElementById('videoTitleInput');
+        const title = titleInput.value ? titleInput.value : "Viral Creator Video";
+        
+        try {
+            const response = await fetch('/api/v1/generate-thumbnail-tags', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: title })
             });
+            const data = await response.json();
+            if (data.success) {
+                document.getElementById('aiOutputBox').classList.remove('hidden');
+                document.getElementById('conceptText').innerText = data.concept;
+                const tagsBox = document.getElementById('tagsContainer');
+                tagsBox.innerHTML = '';
+                data.tags.forEach(tag => {
+                    tagsBox.innerHTML += `<span class="bg-gray-800 text-yellow-300 text-xs px-2 py-0.5 rounded border border-gray-700">#${tag}</span>`;
+                });
+            } else {
+                alert('Generation failed. Please try again.');
+            }
+        } catch (err) {
+            alert('Error connecting to generation engine.');
         }
     }
 </script>
