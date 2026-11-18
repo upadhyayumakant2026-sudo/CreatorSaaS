@@ -1,132 +1,181 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="hi" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CreatorSaaS - GOAT Mastered Studio & Native Publisher</title>
+    <title>CreatorSaaS - Super Grand GOAT Autonomous Studio</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 25px rgba(245, 158, 11, 0.4); }
+            50% { box-shadow: 0 0 50px rgba(239, 68, 68, 0.7); }
+        .goat-glow { animation: pulse-glow 3s infinite; }
+    </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
-    <!-- Header -->
-    <header class="border-b border-slate-800 bg-slate-900/50 backdrop-blur sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-amber-500 selection:text-black">
+
+    <!-- Grand Header -->
+    <header class="border-b border-slate-800/80 bg-slate-900/80 backdrop-blur-xl sticky top-0 z-50 px-6 py-4 flex justify-between items-center shadow-2xl">
         <div class="flex items-center space-x-3">
-            <div class="bg-gradient-to-r from-amber-500 to-red-600 p-2 rounded-xl text-white font-black text-xl">🐐 GOAT</div>
+            <div class="bg-gradient-to-tr from-amber-500 via-orange-600 to-red-600 p-3 rounded-2xl text-white font-black text-2xl shadow-lg goat-glow">🐐 GOAT</div>
             <div>
-                <h1 class="font-bold text-lg text-white">CreatorSaaS Studio</h1>
-                <p class="text-xs text-slate-400">Autonomous Video & 5-Brahastra Engine</p>
+                <h1 class="font-extrabold text-xl text-transparent bg-clip-text bg-gradient-to-r from-white via-amber-200 to-amber-400">CreatorSaaS GOAT Engine</h1>
+                <p class="text-xs text-amber-500/90 font-semibold tracking-wider">SUPREME AUTONOMOUS PUBLISHING STUDIO 2026</p>
             </div>
         </div>
         <div class="flex items-center space-x-4">
-            <div class="bg-slate-800 px-4 py-2 rounded-lg text-sm border border-slate-700">
-                <span>Referral Earnings: </span>
-                <span id="refEarnings" class="font-bold text-emerald-400">₹0</span>
+            <div class="bg-slate-900/90 px-4 py-2 rounded-xl text-sm border border-slate-800 shadow-inner flex items-center space-x-2">
+                <i class="fa-solid fa-wallet text-emerald-400"></i>
+                <span class="text-slate-400">Earnings:</span>
+                <span id="refEarnings" class="font-bold text-emerald-400 text-base">₹0</span>
             </div>
-            <a href="https://razorpay.me/@umakantupadhyay7758" target="_blank" class="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">Upgrade Pro</a>
+            <a href="https://razorpay.me/@umakantupadhyay7758" target="_blank" class="bg-gradient-to-r from-amber-500 to-red-600 hover:from-amber-400 hover:to-red-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg transition transform hover:scale-105">
+                ⚡ Upgrade Pro / VIP
+            </a>
         </div>
     </header>
 
-    <!-- Main Container -->
-    <main class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Grand Main Container: Split Studio Layout -->
+    <main class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        <!-- Left & Center: Video Studio & Upload -->
-        <div class="lg:col-span-2 space-y-6">
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-                <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
-                    <i class="fa-solid fa-clapperboard text-amber-500"></i> Autonomous Video Studio
+        <!-- Left & Center Column: Dual Video Preview & Autonomous Upload (7 Cols) -->
+        <div class="lg:col-span-7 space-y-6">
+            
+            <!-- Upload & Studio Panel -->
+            <div class="bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800/80 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
+                <div class="absolute -right-10 -top-10 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-3 text-white">
+                    <span class="p-2 bg-amber-500/20 text-amber-400 rounded-xl"><i class="fa-solid fa-clapperboard"></i></span> 
+                    Raw Video & Autonomous Studio
                 </h2>
                 
                 <form id="uploadForm" class="space-y-4">
-                    <div class="border-2 border-dashed border-slate-700 rounded-xl p-8 text-center hover:border-amber-500 transition cursor-pointer bg-slate-950/50" onclick="document.getElementById('videoFile').click()">
-                        <i class="fa-solid fa-cloud-arrow-up text-4xl text-amber-500 mb-2"></i>
-                        <p class="text-sm font-medium">Click to upload raw video or drag & drop</p>
-                        <p class="text-xs text-slate-500 mt-1">MP4, MKV, MOV supported</p>
+                    <div class="border-2 border-dashed border-slate-700/80 rounded-2xl p-8 text-center hover:border-amber-500 transition-all cursor-pointer bg-slate-950/60 group hover:bg-slate-900/50" onclick="document.getElementById('videoFile').click()">
+                        <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-gradient-to-tr from-amber-500/20 to-red-500/20 flex items-center justify-center group-hover:scale-110 transition duration-300">
+                            <i class="fa-solid fa-cloud-arrow-up text-3xl text-amber-400"></i>
+                        </div>
+                        <p class="text-sm font-bold text-slate-200">Drag & Drop raw master video or Click to Browse</p>
+                        <p class="text-xs text-slate-400 mt-1">Supports MP4, MKV, MOV (Commercial Monetization Grade)</p>
                         <input type="file" id="videoFile" name="video_file" class="hidden" accept="video/*">
                     </div>
-                    <div id="fileNameDisplay" class="text-sm text-emerald-400 font-medium"></div>
+                    <div id="fileNameDisplay" class="text-sm text-amber-400 font-semibold px-2"></div>
                     
-                    <button type="submit" class="w-full bg-gradient-to-r from-amber-500 to-red-600 hover:opacity-90 text-white font-bold py-3 rounded-xl shadow-lg transition">
-                        🚀 Run GOAT Processing & 5 Brahmashtras
+                    <button type="submit" class="w-full bg-gradient-to-r from-amber-500 via-orange-600 to-red-600 hover:opacity-95 text-white font-black py-4 rounded-2xl shadow-xl shadow-amber-600/20 transition-all text-base tracking-wide flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-wand-magic-sparkles text-lg"></i>
+                        <span>RUN GOAT SUPREME PROCESSING & 5 BRAHMASHTRAS</span>
                     </button>
                 </form>
 
-                <!-- Video Preview Player -->
-                <div class="mt-6">
-                    <h3 class="text-sm font-semibold text-slate-400 mb-2">Processed Output Preview:</h3>
-                    <video id="outputVideo" controls class="w-full h-64 bg-black rounded-xl border border-slate-800 hidden"></video>
+                <!-- Dual Screen Live Video Preview -->
+                <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-slate-950 border border-slate-800 rounded-2xl p-3">
+                        <span class="text-xs font-bold text-slate-400 mb-2 block flex items-center gap-1">
+                            <i class="fa-solid fa-video text-slate-500"></i> Raw Input Feed
+                        </span>
+                        <video id="rawInputVideo" controls class="w-full h-44 bg-black rounded-xl object-cover border border-slate-800"></video>
+                    </div>
+                    <div class="bg-slate-950 border border-amber-500/40 rounded-2xl p-3 shadow-lg shadow-amber-500/10">
+                        <span class="text-xs font-bold text-amber-400 mb-2 block flex items-center gap-1">
+                            <i class="fa-solid fa-star text-amber-400"></i> GOAT Mastered Output Studio
+                        </span>
+                        <video id="outputVideo" controls class="w-full h-44 bg-black rounded-xl object-cover border border-amber-500/50 hidden"></video>
+                        <div id="outputPlaceholder" class="w-full h-44 bg-slate-900/60 rounded-xl border border-slate-800 flex flex-col items-center justify-center text-slate-500 text-xs">
+                            <i class="fa-solid fa-film text-2xl mb-1 text-slate-600"></i>
+                            Waiting for master execution...
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- SEO & Metadata Box -->
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-                <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
-                    <i class="fa-solid fa-chart-line text-emerald-400"></i> VidIQ AI SEO & Metadata
+            <!-- VidIQ AI SEO & Thumbnail Suite -->
+            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-3 text-white">
+                    <span class="p-2 bg-emerald-500/20 text-emerald-400 rounded-xl"><i class="fa-solid fa-chart-line"></i></span> 
+                    VidIQ AI SEO & Thumbnail Generator
                 </h2>
-                <div class="space-y-3">
+                <div class="space-y-4">
                     <div>
-                        <label class="text-xs text-slate-400">Optimized Title:</label>
-                        <input type="text" id="seoTitle" readonly class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm text-slate-200">
+                        <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Viral Optimized Title (98/100 Score):</label>
+                        <input type="text" id="seoTitle" readonly class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 focus:outline-none font-medium mt-1">
                     </div>
                     <div>
-                        <label class="text-xs text-slate-400">Viral Description & Tags:</label>
-                        <textarea id="seoDesc" rows="3" readonly class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm text-slate-200"></textarea>
+                        <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Viral Description & Monetization Tags:</label>
+                        <textarea id="seoDesc" rows="3" readonly class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 focus:outline-none font-medium mt-1 resize-none"></textarea>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Right Column: 5 Brahmashtras & Quick Share -->
-        <div class="space-y-6">
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-                <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
-                    <i class="fa-solid fa-bolt text-amber-500"></i> 5 Brahmastra Tools
+        <!-- Right Column: 5 Brahmastra Tools & Quick Share (5 Cols) -->
+        <div class="lg:col-span-5 space-y-6">
+            
+            <!-- 5 Brahmashtras Suite -->
+            <div class="bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800/80 rounded-3xl p-6 shadow-2xl">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-3 text-white">
+                    <span class="p-2 bg-amber-500/20 text-amber-400 rounded-xl"><i class="fa-solid fa-bolt"></i></span> 
+                    The 5 Brahmastra Tools
                 </h2>
+                
                 <div class="space-y-3">
-                    <button onclick="runBrahma('/apply_copyright_shield')" class="w-full bg-slate-800 hover:bg-slate-700 p-3 rounded-xl text-left text-sm font-medium border border-slate-700 transition flex items-center justify-between">
-                        <span>🛡️ AI Copyright Shield</span> <i class="fa-solid fa-chevron-right text-xs text-slate-500"></i>
+                    <button onclick="runBrahma('/apply_copyright_shield')" class="w-full bg-slate-800/70 hover:bg-slate-800 p-3.5 rounded-2xl text-left text-sm font-semibold border border-slate-700/80 transition-all flex items-center justify-between group hover:border-amber-500/50">
+                        <span class="flex items-center gap-3"><span class="text-lg">🛡️</span> AI Copyright Shield (100% Safe)</span> 
+                        <i class="fa-solid fa-chevron-right text-xs text-slate-500 group-hover:translate-x-1 transition"></i>
                     </button>
-                    <button onclick="runBrahma('/generate_viral_trend')" class="w-full bg-slate-800 hover:bg-slate-700 p-3 rounded-xl text-left text-sm font-medium border border-slate-700 transition flex items-center justify-between">
-                        <span>📈 Trend-Jacking Hook</span> <i class="fa-solid fa-chevron-right text-xs text-slate-500"></i>
+                    <button onclick="runBrahma('/generate_viral_trend')" class="w-full bg-slate-800/70 hover:bg-slate-800 p-3.5 rounded-2xl text-left text-sm font-semibold border border-slate-700/80 transition-all flex items-center justify-between group hover:border-amber-500/50">
+                        <span class="flex items-center gap-3"><span class="text-lg">📈</span> Trend-Jacking Viral Hook</span> 
+                        <i class="fa-solid fa-chevron-right text-xs text-slate-500 group-hover:translate-x-1 transition"></i>
                     </button>
-                    <button onclick="runBrahma('/global_clone_translate')" class="w-full bg-slate-800 hover:bg-slate-700 p-3 rounded-xl text-left text-sm font-medium border border-slate-700 transition flex items-center justify-between">
-                        <span>🌍 Global Clone & Dub</span> <i class="fa-solid fa-chevron-right text-xs text-slate-500"></i>
+                    <button onclick="runBrahma('/global_clone_translate')" class="w-full bg-slate-800/70 hover:bg-slate-800 p-3.5 rounded-2xl text-left text-sm font-semibold border border-slate-700/80 transition-all flex items-center justify-between group hover:border-amber-500/50">
+                        <span class="flex items-center gap-3"><span class="text-lg">🌍</span> Multi-Language Global Clone</span> 
+                        <i class="fa-solid fa-chevron-right text-xs text-slate-500 group-hover:translate-x-1 transition"></i>
                     </button>
-                    <button onclick="runBrahma('/inject_affiliate_links')" class="w-full bg-slate-800 hover:bg-slate-700 p-3 rounded-xl text-left text-sm font-medium border border-slate-700 transition flex items-center justify-between">
-                        <span>💰 Smart Affiliate Injector</span> <i class="fa-solid fa-chevron-right text-xs text-slate-500"></i>
+                    <button onclick="runBrahma('/inject_affiliate_links')" class="w-full bg-slate-800/70 hover:bg-slate-800 p-3.5 rounded-2xl text-left text-sm font-semibold border border-slate-700/80 transition-all flex items-center justify-between group hover:border-amber-500/50">
+                        <span class="flex items-center gap-3"><span class="text-lg">💰</span> Smart Affiliate Injector</span> 
+                        <i class="fa-solid fa-chevron-right text-xs text-slate-500 group-hover:translate-x-1 transition"></i>
                     </button>
-                    <button onclick="runBrahma('/generate_emotion_voice')" class="w-full bg-slate-800 hover:bg-slate-700 p-3 rounded-xl text-left text-sm font-medium border border-slate-700 transition flex items-center justify-between">
-                        <span>🎙️ Voice of Emotion Studio</span> <i class="fa-solid fa-chevron-right text-xs text-slate-500"></i>
+                    <button onclick="runBrahma('/generate_emotion_voice')" class="w-full bg-slate-800/70 hover:bg-slate-800 p-3.5 rounded-2xl text-left text-sm font-semibold border border-slate-700/80 transition-all flex items-center justify-between group hover:border-amber-500/50">
+                        <span class="flex items-center gap-3"><span class="text-lg">🎙️</span> Voice of Emotion Studio</span> 
+                        <i class="fa-solid fa-chevron-right text-xs text-slate-500 group-hover:translate-x-1 transition"></i>
                     </button>
                 </div>
-                <div id="brahmaStatus" class="mt-4 p-3 bg-slate-950 rounded-xl text-xs text-amber-400 border border-slate-800 hidden"></div>
+                
+                <div id="brahmaStatus" class="mt-4 p-4 bg-slate-950 rounded-2xl text-xs text-amber-300 font-medium border border-amber-500/30 shadow-inner hidden"></div>
             </div>
 
-            <!-- Native Quick Share & Referral -->
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-                <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
-                    <i class="fa-solid fa-share-nodes text-indigo-400"></i> One-Tap Quick Share
+            <!-- Native Quick Publish & Social Share -->
+            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-3 text-white">
+                    <span class="p-2 bg-indigo-500/20 text-indigo-400 rounded-xl"><i class="fa-solid fa-share-nodes"></i></span> 
+                    One-Tap Native Publisher
                 </h2>
                 <div class="grid grid-cols-2 gap-3 mb-4">
-                    <a href="https://studio.youtube.com" target="_blank" class="bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 p-3 rounded-xl text-center text-sm font-semibold transition">
-                        <i class="fa-brands fa-youtube mr-1"></i> YouTube
+                    <a href="https://studio.youtube.com" target="_blank" class="bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-500/30 p-3.5 rounded-2xl text-center text-sm font-bold transition flex items-center justify-center gap-2">
+                        <i class="fa-brands fa-youtube text-lg"></i> YouTube Studio
                     </a>
-                    <a href="https://facebook.com" target="_blank" class="bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 p-3 rounded-xl text-center text-sm font-semibold transition">
-                        <i class="fa-brands fa-facebook mr-1"></i> Facebook
+                    <a href="https://facebook.com" target="_blank" class="bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-500/30 p-3.5 rounded-2xl text-center text-sm font-bold transition flex items-center justify-center gap-2">
+                        <i class="fa-brands fa-facebook text-lg"></i> Facebook Page
                     </a>
                 </div>
-                <button onclick="shareReferral()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl text-sm transition">
-                    🔗 Copy Referral Link (+₹125)
+                <button onclick="shareReferral()" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-3.5 rounded-2xl text-sm shadow-lg transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-link"></i> Copy Referral Partner Link (+₹125)
                 </button>
             </div>
         </div>
     </main>
 
-    <!-- Script to handle frontend interactivity -->
+    <!-- Super Grand JavaScript Interactivity -->
     <script>
         const fileInput = document.getElementById('videoFile');
-        fileInput.addEventListener('change', () => {
+        const rawInputVideo = document.getElementById('rawInputVideo');
+        
+        fileInput.addEventListener('change', (e) => {
             if(fileInput.files.length > 0) {
-                document.getElementById('fileNameDisplay').innerText = "Selected: " + fileInput.files[0].name;
+                const file = fileInput.files[0];
+                document.getElementById('fileNameDisplay').innerText = "Selected Master File: " + file.name;
+                const fileURL = URL.createObjectURL(file);
+                rawInputVideo.src = fileURL;
             }
         });
 
@@ -135,7 +184,7 @@
             const formData = new FormData(e.target);
             const statusDiv = document.getElementById('brahmaStatus');
             statusDiv.classList.remove('hidden');
-            statusDiv.innerText = "⏳ Processing video through GOAT Autonomous Engine...";
+            statusDiv.innerHTML = "<i class='fa-solid fa-spinner fa-spin mr-2'></i> GOAT Autonomous Studio executing 5 Brahmashtras & VidIQ AI Pipeline...";
 
             try {
                 const response = await fetch('/process_video', {
@@ -144,32 +193,34 @@
                 });
                 const data = await response.json();
                 if(data.status === 'success') {
-                    statusDiv.innerText = data.message;
+                    statusDiv.innerHTML = "✅ " + data.message;
                     document.getElementById('seoTitle').value = data.seo_title;
                     document.getElementById('seoDesc').value = data.seo_description;
                     
                     const videoPlayer = document.getElementById('outputVideo');
+                    const placeholder = document.getElementById('outputPlaceholder');
                     videoPlayer.src = data.video_url;
                     videoPlayer.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
                     videoPlayer.play();
                 } else {
                     statusDiv.innerText = "Error: " + data.message;
                 }
             } catch (err) {
-                statusDiv.innerText = "Critical Error during upload.";
+                statusDiv.innerText = "Critical Error during autonomous execution.";
             }
         });
 
         async function runBrahma(endpoint) {
             const statusDiv = document.getElementById('brahmaStatus');
             statusDiv.classList.remove('hidden');
-            statusDiv.innerText = "⚙️ Executing tool...";
+            statusDiv.innerHTML = "<i class='fa-solid fa-bolt fa-spin mr-2'></i> Activating Brahmastra Tool...";
             try {
                 const res = await fetch(endpoint, { method: 'POST' });
                 const data = await res.json();
-                statusDiv.innerText = data.message || data.trend_script || "Executed successfully!";
+                statusDiv.innerHTML = "⚡ " + (data.message || data.trend_script || "Executed successfully!");
             } catch(e) {
-                statusDiv.innerText = "Error executing tool.";
+                statusDiv.innerText = "Error executing Brahmastra tool.";
             }
         }
 
@@ -180,7 +231,7 @@
                 document.getElementById('refEarnings').innerText = "₹" + data.referral_earnings;
                 alert(data.message);
             } catch(e) {
-                alert("Referral link copied!");
+                alert("Referral link copied successfully!");
             }
         }
     </script>
