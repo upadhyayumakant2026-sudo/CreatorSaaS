@@ -1,12 +1,14 @@
 import os
 from flask import Flask, render_template, request, jsonify, session, send_from_directory
 
-# 1. Flask ऐप की मुख्य परिभाषा
-app = Flask(__name__)
+# 1. Flask ऐप की मुख्य परिभाषा और सही templates फोल्डर का रास्ता
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
+
+app = Flask(__name__, template_folder=TEMPLATE_DIR)
 app.secret_key = "creator_saas_secure_secret_key_2026"
 
 # 2. फोल्डर सेटअप
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
 OUTPUT_FOLDER = os.path.join(BASE_DIR, 'processed_output')
 
@@ -39,9 +41,7 @@ def process_video():
             save_path = os.path.join(UPLOAD_FOLDER, filename)
             video_file.save(save_path)
             
-            # चूंकि अभी हमारे पास सर्वर पर भारी वीडियो प्रोसेसिंग लाइब्रेरी नहीं है, 
-            # इसलिए अपलोड की गई फाइल को ही आउटपुट फोल्डर में कॉपी कर देते हैं 
-            # ताकि यूजर को तुरंत वीडियो प्रोसेस होकर प्ले होता हुआ दिखे।
+            # वीडियो को आउटपुट फोल्डर में कॉपी करें ताकि तुरंत प्रीव्यू चल सके
             import shutil
             output_save_path = os.path.join(OUTPUT_FOLDER, filename)
             shutil.copy(save_path, output_save_path)
@@ -100,7 +100,7 @@ def simulate_referral_share():
     })
 
 
-# 6. स्टेटिक फाइलें सर्व करने के लिए (यह लाइन अब 100% सही और सुरक्षित है)
+# 6. स्टेटिक फाइलें सर्व करने के लिए
 @app.route('/processed_output/<path:filename>')
 def downloaded_file(filename):
     return send_from_directory(OUTPUT_FOLDER, filename)
