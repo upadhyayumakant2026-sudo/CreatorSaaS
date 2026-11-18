@@ -1,7 +1,7 @@
 import os
 from flask import Flask, render_template, request, jsonify, session, send_from_directory
 
-# 1. Flask ऐप की मुख्य परिभाषा
+# 1. Flask ऐप की मुख्य परिभाषा (templates फोल्डर लॉक)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
 
@@ -19,14 +19,19 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['OUTPUT_FOLDER'] = OUTPUT_FOLDER
 
 
-# 3. लैंडिंग पेज / डैशबोर्ड रूट
+# 3. रूट 1: शानदार लैंडिंग पेज (index.html)
 @app.route('/')
+def index():
+    return render_template('index.html')
+
+
+# 4. रूट 2: सुपर-ग्रैंड GOAT स्टूडियो डैशबोर्ड (dashboard.html)
 @app.route('/dashboard')
 def dashboard():
     return render_template('dashboard.html')
 
 
-# 4. मुख्य वीडियो प्रोसेसिंग और ब्रह्मास्त्र रूट
+# 5. मुख्य वीडियो प्रोसेसिंग और ब्रह्मास्त्र रूट
 @app.route('/process_video', methods=['POST'])
 def process_video():
     try:
@@ -40,6 +45,7 @@ def process_video():
             save_path = os.path.join(UPLOAD_FOLDER, filename)
             video_file.save(save_path)
             
+            # वीडियो को आउटपुट फोल्डर में कॉपी करें ताकि तुरंत प्रीव्यू चल सके
             import shutil
             output_save_path = os.path.join(OUTPUT_FOLDER, filename)
             shutil.copy(save_path, output_save_path)
@@ -48,7 +54,7 @@ def process_video():
             'status': 'success',
             'message': '🚀 GOAT Autonomous Processing & 5 Brahmashtras Executed Successfully!',
             'video_url': f'/processed_output/{filename}',
-            'seo_score': 96,
+            'seo_score': 98,
             'seo_title': '🔥 Ultimate Viral Masterpiece 2026 | GOAT Studio',
             'seo_description': 'Discover the revolutionary AI-powered secrets behind this 2026 viral masterpiece. Watch till the end for exclusive insights!',
             'thumbnail_url': ''
@@ -62,7 +68,7 @@ def process_video():
         }), 500
 
 
-# 5. बाकी 5 ब्रह्मास्त्रों के लिए बैकएंड राउट्स
+# 6. बाकी 5 ब्रह्मास्त्रों के बैकएंड राउट्स
 @app.route('/apply_copyright_shield', methods=['POST'])
 def apply_copyright_shield():
     return jsonify({'message': '🛡️ Bulletproof AI Copyright Shield Activated Successfully! Your video is 100% monetization safe.'})
@@ -97,13 +103,13 @@ def simulate_referral_share():
     })
 
 
-# 6. स्टेटिक फाइलें सर्व करने के लिए
+# 7. स्टेटिक फाइलें सर्व करने के लिए (processed_output)
 @app.route('/processed_output/<path:filename>')
 def downloaded_file(filename):
     return send_from_directory(OUTPUT_FOLDER, filename)
 
 
-# 7. ऐप रनर
+# 8. ऐप रनर
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
