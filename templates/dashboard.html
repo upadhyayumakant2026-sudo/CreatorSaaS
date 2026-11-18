@@ -1,106 +1,188 @@
-import os
-from flask import Flask, render_template, request, jsonify, session
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CreatorSaaS - GOAT Mastered Studio & Native Publisher</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
+    <!-- Header -->
+    <header class="border-b border-slate-800 bg-slate-900/50 backdrop-blur sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center space-x-3">
+            <div class="bg-gradient-to-r from-amber-500 to-red-600 p-2 rounded-xl text-white font-black text-xl">🐐 GOAT</div>
+            <div>
+                <h1 class="font-bold text-lg text-white">CreatorSaaS Studio</h1>
+                <p class="text-xs text-slate-400">Autonomous Video & 5-Brahastra Engine</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-4">
+            <div class="bg-slate-800 px-4 py-2 rounded-lg text-sm border border-slate-700">
+                <span>Referral Earnings: </span>
+                <span id="refEarnings" class="font-bold text-emerald-400">₹0</span>
+            </div>
+            <a href="https://razorpay.me/@umakantupadhyay7758" target="_blank" class="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">Upgrade Pro</a>
+        </div>
+    </header>
 
-# 1. Flask ऐप की मुख्य परिभाषा
-app = Flask(__name__)
-app.secret_key = "creator_saas_secure_secret_key_2026"
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Left & Center: Video Studio & Upload -->
+        <div class="lg:col-span-2 space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-clapperboard text-amber-500"></i> Autonomous Video Studio
+                </h2>
+                
+                <form id="uploadForm" class="space-y-4">
+                    <div class="border-2 border-dashed border-slate-700 rounded-xl p-8 text-center hover:border-amber-500 transition cursor-pointer bg-slate-950/50" onclick="document.getElementById('videoFile').click()">
+                        <i class="fa-solid fa-cloud-arrow-up text-4xl text-amber-500 mb-2"></i>
+                        <p class="text-sm font-medium">Click to upload raw video or drag & drop</p>
+                        <p class="text-xs text-slate-500 mt-1">MP4, MKV, MOV supported</p>
+                        <input type="file" id="videoFile" name="video_file" class="hidden" accept="video/*">
+                    </div>
+                    <div id="fileNameDisplay" class="text-sm text-emerald-400 font-medium"></div>
+                    
+                    <button type="submit" class="w-full bg-gradient-to-r from-amber-500 to-red-600 hover:opacity-90 text-white font-bold py-3 rounded-xl shadow-lg transition">
+                        🚀 Run GOAT Processing & 5 Brahmashtras
+                    </button>
+                </form>
 
-# 2. फोल्डर सेटअप
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
-OUTPUT_FOLDER = os.path.join(BASE_DIR, 'processed_output')
+                <!-- Video Preview Player -->
+                <div class="mt-6">
+                    <h3 class="text-sm font-semibold text-slate-400 mb-2">Processed Output Preview:</h3>
+                    <video id="outputVideo" controls class="w-full h-64 bg-black rounded-xl border border-slate-800 hidden"></video>
+                </div>
+            </div>
 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+            <!-- SEO & Metadata Box -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-chart-line text-emerald-400"></i> VidIQ AI SEO & Metadata
+                </h2>
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-xs text-slate-400">Optimized Title:</label>
+                        <input type="text" id="seoTitle" readonly class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm text-slate-200">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400">Viral Description & Tags:</label>
+                        <textarea id="seoDesc" rows="3" readonly class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm text-slate-200"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['OUTPUT_FOLDER'] = OUTPUT_FOLDER
+        <!-- Right Column: 5 Brahmashtras & Quick Share -->
+        <div class="space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-bolt text-amber-500"></i> 5 Brahmastra Tools
+                </h2>
+                <div class="space-y-3">
+                    <button onclick="runBrahma('/apply_copyright_shield')" class="w-full bg-slate-800 hover:bg-slate-700 p-3 rounded-xl text-left text-sm font-medium border border-slate-700 transition flex items-center justify-between">
+                        <span>🛡️ AI Copyright Shield</span> <i class="fa-solid fa-chevron-right text-xs text-slate-500"></i>
+                    </button>
+                    <button onclick="runBrahma('/generate_viral_trend')" class="w-full bg-slate-800 hover:bg-slate-700 p-3 rounded-xl text-left text-sm font-medium border border-slate-700 transition flex items-center justify-between">
+                        <span>📈 Trend-Jacking Hook</span> <i class="fa-solid fa-chevron-right text-xs text-slate-500"></i>
+                    </button>
+                    <button onclick="runBrahma('/global_clone_translate')" class="w-full bg-slate-800 hover:bg-slate-700 p-3 rounded-xl text-left text-sm font-medium border border-slate-700 transition flex items-center justify-between">
+                        <span>🌍 Global Clone & Dub</span> <i class="fa-solid fa-chevron-right text-xs text-slate-500"></i>
+                    </button>
+                    <button onclick="runBrahma('/inject_affiliate_links')" class="w-full bg-slate-800 hover:bg-slate-700 p-3 rounded-xl text-left text-sm font-medium border border-slate-700 transition flex items-center justify-between">
+                        <span>💰 Smart Affiliate Injector</span> <i class="fa-solid fa-chevron-right text-xs text-slate-500"></i>
+                    </button>
+                    <button onclick="runBrahma('/generate_emotion_voice')" class="w-full bg-slate-800 hover:bg-slate-700 p-3 rounded-xl text-left text-sm font-medium border border-slate-700 transition flex items-center justify-between">
+                        <span>🎙️ Voice of Emotion Studio</span> <i class="fa-solid fa-chevron-right text-xs text-slate-500"></i>
+                    </button>
+                </div>
+                <div id="brahmaStatus" class="mt-4 p-3 bg-slate-950 rounded-xl text-xs text-amber-400 border border-slate-800 hidden"></div>
+            </div>
 
+            <!-- Native Quick Share & Referral -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-share-nodes text-indigo-400"></i> One-Tap Quick Share
+                </h2>
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <a href="https://studio.youtube.com" target="_blank" class="bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 p-3 rounded-xl text-center text-sm font-semibold transition">
+                        <i class="fa-brands fa-youtube mr-1"></i> YouTube
+                    </a>
+                    <a href="https://facebook.com" target="_blank" class="bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 p-3 rounded-xl text-center text-sm font-semibold transition">
+                        <i class="fa-brands fa-facebook mr-1"></i> Facebook
+                    </a>
+                </div>
+                <button onclick="shareReferral()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl text-sm transition">
+                    🔗 Copy Referral Link (+₹125)
+                </button>
+            </div>
+        </div>
+    </main>
 
-# 3. लैंडिंग पेज / डैशबोर्ड रूट
-@app.route('/')
-@app.route('/dashboard')
-def dashboard():
-    return render_template('dashboard.html')
+    <!-- Script to handle frontend interactivity -->
+    <script>
+        const fileInput = document.getElementById('videoFile');
+        fileInput.addEventListener('change', () => {
+            if(fileInput.files.length > 0) {
+                document.getElementById('fileNameDisplay').innerText = "Selected: " + fileInput.files[0].name;
+            }
+        });
 
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const statusDiv = document.getElementById('brahmaStatus');
+            statusDiv.classList.remove('hidden');
+            statusDiv.innerText = "⏳ Processing video through GOAT Autonomous Engine...";
 
-# 4. मुख्य वीडियो प्रोसेसिंग और ब्रह्मास्त्र रूट
-@app.route('/process_video', methods=['POST'])
-def process_video():
-    try:
-        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-        os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+            try {
+                const response = await fetch('/process_video', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if(data.status === 'success') {
+                    statusDiv.innerText = data.message;
+                    document.getElementById('seoTitle').value = data.seo_title;
+                    document.getElementById('seoDesc').value = data.seo_description;
+                    
+                    const videoPlayer = document.getElementById('outputVideo');
+                    videoPlayer.src = data.video_url;
+                    videoPlayer.classList.remove('hidden');
+                    videoPlayer.play();
+                } else {
+                    statusDiv.innerText = "Error: " + data.message;
+                }
+            } catch (err) {
+                statusDiv.innerText = "Critical Error during upload.";
+            }
+        });
 
-        # यदि यूजर ने वीडियो अपलोड किया है, तो उसे सेव करें
-        video_file = request.files.get('video_file')
-        filename = "GOAT_Mastered.mp4"
-        if video_file:
-            filename = video_file.filename
-            save_path = os.path.join(UPLOAD_FOLDER, filename)
-            video_file.save(save_path)
+        async function runBrahma(endpoint) {
+            const statusDiv = document.getElementById('brahmaStatus');
+            statusDiv.classList.remove('hidden');
+            statusDiv.innerText = "⚙️ Executing tool...";
+            try {
+                const res = await fetch(endpoint, { method: 'POST' });
+                const data = await res.json();
+                statusDiv.innerText = data.message || data.trend_script || "Executed successfully!";
+            } catch(e) {
+                statusDiv.innerText = "Error executing tool.";
+            }
+        }
 
-        # फ्रंटएंड के लिए सफल JSON रिस्पॉन्स और VidIQ SEO डेटा
-        return jsonify({
-            'status': 'success',
-            'message': '🚀 GOAT Autonomous Processing & 5 Brahmashtras Executed Successfully!',
-            'video_url': f'/processed_output/{filename}',
-            'seo_score': 96,
-            'seo_title': '🔥 Ultimate Viral Masterpiece 2026 | GOAT Studio',
-            'seo_description': 'Discover the revolutionary AI-powered secrets behind this 2026 viral masterpiece. Watch till the end for exclusive insights!',
-            'thumbnail_url': ''
-        })
-
-    except Exception as e:
-        print(f"CRITICAL ERROR IN PROCESS: {str(e)}")
-        return jsonify({
-            'status': 'error',
-            'message': f'Error: {str(e)}'
-        }), 500
-
-
-# 5. बाकी 5 ब्रह्मास्त्रों के लिए बैकएंड राउट्स (ताकि बटन कभी फेल न हों)
-@app.route('/apply_copyright_shield', methods=['POST'])
-def apply_copyright_shield():
-    return jsonify({'message': '🛡️ Bulletproof AI Copyright Shield Activated Successfully! Your video is 100% monetization safe.'})
-
-@app.route('/generate_viral_trend', methods=['POST'])
-def generate_viral_trend():
-    return jsonify({
-        'trend_title': '📈 Trend-Jacking Hook: "The 1% Rule of 2026"',
-        'trend_script': 'Hook: Stop doing what everyone else is doing. Here is the exact blueprint top creators use to scale overnight!'
-    })
-
-@app.route('/global_clone_translate', methods=['POST'])
-def global_clone_translate():
-    return jsonify({'message': '🌍 Multi-Language Global Clone: Successfully dubbed into top 20 international languages with lip-sync!'})
-
-@app.route('/inject_affiliate_links', methods=['POST'])
-def inject_affiliate_links():
-    return jsonify({'message': '💰 Smart Affiliate Links & Auto-Monetization banners successfully injected into video description & timeline!'})
-
-@app.route('/generate_emotion_voice', methods=['POST'])
-def generate_emotion_voice():
-    return jsonify({'message': '🎙️ "Voice of Emotion" Studio Synthesized: Soulful retro tone and deep modulation applied successfully!'})
-
-@app.route('/simulate_referral_share', methods=['POST'])
-def simulate_referral_share():
-    session['total_referrals'] = session.get('total_referrals', 0) + 1
-    session['referral_earnings'] = session.get('referral_earnings', 0) + 125
-    return jsonify({
-        'message': '📲 Referral link copied successfully! +1 Referral tracked.',
-        'total_referrals': session['total_referrals'],
-        'referral_earnings': session['referral_earnings']
-    })
-
-
-# 6. स्टेटिक फाइलें सर्व करने के लिए (ताकि processed_output वीडियो ब्राउज़र में चल सके)
-from flask import send_from_directory
-@app.route('/processed_output/<path:filename>')
-def downloaded_file(filename):
-    return send_from_directory(OUTPUT_FOLDER, filename)
-
-
-# 7. ऐप रनर
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+        async function shareReferral() {
+            try {
+                const res = await fetch('/simulate_referral_share', { method: 'POST' });
+                const data = await res.json();
+                document.getElementById('refEarnings').innerText = "₹" + data.referral_earnings;
+                alert(data.message);
+            } catch(e) {
+                alert("Referral link copied!");
+            }
+        }
+    </script>
+</body>
+</html>

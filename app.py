@@ -1,7 +1,7 @@
 import os
 from flask import Flask, render_template, request, jsonify, session, send_from_directory
 
-# 1. Flask ऐप की मुख्य परिभाषा और सही templates फोल्डर का रास्ता
+# 1. Flask ऐप की मुख्य परिभाषा
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
 
@@ -33,7 +33,6 @@ def process_video():
         os.makedirs(UPLOAD_FOLDER, exist_ok=True)
         os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
-        # यदि यूजर ने वीडियो अपलोड किया है, तो उसे सेव करें
         video_file = request.files.get('video_file')
         filename = "GOAT_Mastered.mp4"
         if video_file:
@@ -41,12 +40,10 @@ def process_video():
             save_path = os.path.join(UPLOAD_FOLDER, filename)
             video_file.save(save_path)
             
-            # वीडियो को आउटपुट फोल्डर में कॉपी करें ताकि तुरंत प्रीव्यू चल सके
             import shutil
             output_save_path = os.path.join(OUTPUT_FOLDER, filename)
             shutil.copy(save_path, output_save_path)
 
-        # फ्रंटएंड के लिए सफल JSON रिस्पॉन्स और VidIQ SEO डेटा
         return jsonify({
             'status': 'success',
             'message': '🚀 GOAT Autonomous Processing & 5 Brahmashtras Executed Successfully!',
