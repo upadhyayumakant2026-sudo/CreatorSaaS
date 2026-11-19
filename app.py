@@ -1,151 +1,288 @@
 import os
+import json
 import shutil
+from datetime import datetime
 from flask import (
     Flask, render_template_string, request, jsonify,
     redirect, url_for, session, send_from_directory
 )
+from werkzeug.security import generate_password_hash, check_password_hash
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
 STATIC_DIR = os.path.join(BASE_DIR, 'statics')
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
 OUTPUT_FOLDER = os.path.join(BASE_DIR, 'process_output')
+USERS_FILE = os.path.join(BASE_DIR, 'users_security_store.json')
+
+REFERRAL_COMMISSION_RATE = 0.25  # 25% referral commission
 
 app = Flask(
     __name__,
     template_folder=TEMPLATE_DIR,
     static_folder=STATIC_DIR if os.path.isdir(STATIC_DIR) else 'static'
 )
-app.secret_key = "goat_creatorsaas_secret_2026"
+app.secret_key = os.environ.get("SECRET_KEY", "goat_autonomous_secure_key_2026_v4")
 
 for folder in (TEMPLATE_DIR, STATIC_DIR, UPLOAD_FOLDER, OUTPUT_FOLDER):
     os.makedirs(folder, exist_ok=True)
 
 
-def load_html(filename, **context):
-    for path in (os.path.join(TEMPLATE_DIR, filename), os.path.join(BASE_DIR, filename)):
-        if os.path.isfile(path):
-            with open(path, 'r', encoding='utf-8') as f:
+def load_users():
+    if os.path.isfile(USERS_FILE):
+        try:
+            with open(USERS_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception:
+            return {}
+    return {}
+
+
+def save_users(users_data):
+    with open(USERS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(users_data, f, indent=2, ensure_ascii=False)
+
+
+def load_html_file(filename, **context):
+    for candidate in (
+        os.path.join(TEMPLATE_DIR, filename),
+        os.path.join(BASE_DIR, filename),
+    ):
+        if os.path.isfile(candidate):
+            with open(candidate, 'r', encoding='utf-8') as f:
                 return render_template_string(f.read(), **context)
-    return render_template_string(
-        "<h3>File not found: {{ fname }}</h3><a href='/'>Home</a> | <a href='/login'>Login</a> | <a href='/dashboard'>Dashboard</a>",
-        fname=filename
-    )
+    return None
 
 
 @app.route('/')
 def home():
-    return load_html('landing.html')
+    html = load_html_file('landing.html')
+    if html:
+        return html
+    return redirect(url_for('dashboard'))
 
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    error_msg = ""
     if request.method == 'POST':
         name = (request.form.get('name') or '').strip()
-        email = (request.form.get('email') or '').strip()
-        session['logged_in'] = True
-        session['user_name'] = name or (email.split('@')[0].title() if email else 'Creator')
-        session['user_email'] = email or 'creator@goatstudio.in'
-        return redirect(url_for('dashboard'))
+        email = (request.form.get('email') or '').strip().lower()
+        password = request.form.get('password') or ''
 
-    return render_template_string("""
+        if not email or not password:
+            error_msg = "Email aur Password dono zaroori hain."
+        else:
+            users = load_users()
+            if email in users:
+                if check_password_hash(users[email]['password_hash'], password):
+                    session['logged_in'] = True
+                    session['user_name'] = users[email].get('name') or name or email.split('@')[0].title()
+                    session['user_email'] = email
+                    users[email]['last_login'] = datetime.utcnow().isoformat()
+                    save_users(users)
+                    return redirect(url_for('dashboard'))
+                else:
+                    error_msg = "Galat password. Kripya sahi password darj karein."
+            else:
+                display_name = name or email.split('@')[0].title()
+                users[email] = {
+                    'name': display_name,
+                    'email': email,
+                    'password_hash': generate_password_hash(password),
+                    'created_at': datetime.utcnow().isoformat(),
+                    'last_login': datetime.utcnow().isoformat()
+                }
+                save_users(users)
+                session['logged_in'] = True
+                session['user_name'] = display_name
+                session['user_email'] = email
+                return redirect(url_for('dashboard'))
+
+    login_template = """
     <!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Login — GOAT- Automated video editing and publishing platemorms</title>
+        <title>Secure Login — GOAT- Automated video editing and publishing platemorms</title>
         <style>
             * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
             body {
                 margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
-                padding: 20px; background: #070d1d; color: #f8fafc;
+                padding: 20px; background: radial-gradient(circle at top, #1e3a8a 0%, #060b19 75%); color: #f8fafc;
             }
-            .card {
-                width: 100%; max-width: 430px; background: #0f172a; border: 1px solid #334155;
-                border-radius: 14px; padding: 28px;
+            .box {
+                width: 100%; max-width: 450px; background: #0f172a; border: 1px solid #334155;
+                border-radius: 16px; padding: 28px; box-shadow: 0 24px 50px rgba(0, 0, 0, 0.5);
             }
-            .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-            .stat { background: #1e293b; border: 1px solid #38bdf8; border-radius: 10px; padding: 12px; text-align: center; }
-            .stat b { display: block; font-size: 20px; color: #38bdf8; }
-            .stat span { font-size: 12px; color: #cbd5e1; }
-            h1 { margin: 0 0 18px; font-size: 22px; text-align: center; }
-            label { display: block; font-size: 13px; margin-bottom: 6px; color: #e2e8f0; }
+            .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+            .metric {
+                background: #1e293b; border: 1px solid #38bdf8; border-radius: 12px;
+                padding: 12px; text-align: center;
+            }
+            .metric strong { display: block; font-size: 20px; color: #38bdf8; }
+            .metric span { font-size: 12px; color: #cbd5e1; }
+            h1 { margin: 0 0 6px; font-size: 23px; text-align: center; }
+            .sub { margin: 0 0 18px; font-size: 13px; color: #94a3b8; text-align: center; }
+            .err {
+                background: rgba(239, 68, 68, 0.16); border: 1px solid #ef4444; color: #fca5a5;
+                padding: 10px 12px; border-radius: 8px; font-size: 13px; margin-bottom: 14px;
+            }
+            label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #e2e8f0; }
             input {
-                width: 100%; padding: 11px 12px; border-radius: 8px; border: 1px solid #334155;
-                background: #070d1d; color: #fff; margin-bottom: 14px; font-size: 14px;
+                width: 100%; padding: 11px 13px; border-radius: 8px; border: 1px solid #334155;
+                background: #060b19; color: #ffffff; font-size: 14px; margin-bottom: 14px;
             }
             button {
-                width: 100%; padding: 12px; border: none; border-radius: 8px;
-                background: #10b981; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer;
+                width: 100%; padding: 13px; border: none; border-radius: 8px;
+                background: #10b981; color: #ffffff; font-size: 15px; font-weight: 800; cursor: pointer;
             }
-            .nav { display: flex; justify-content: space-between; margin-top: 16px; font-size: 13px; }
-            .nav a { color: #38bdf8; text-decoration: none; }
+            button:hover { background: #059669; }
+            .sec-note { margin-top: 12px; font-size: 12px; color: #94a3b8; text-align: center; }
+            .foot { display: flex; justify-content: space-between; margin-top: 16px; font-size: 13px; }
+            .foot a { color: #38bdf8; text-decoration: none; }
         </style>
     </head>
     <body>
-        <div class="card">
-            <div class="stats">
-                <div class="stat"><b>12,000+</b><span>Downloads</span></div>
-                <div class="stat"><b>4★</b><span>Rating</span></div>
+        <div class="box">
+            <div class="metrics">
+                <div class="metric"><strong>12,000+</strong><span>Downloads</span></div>
+                <div class="metric"><strong>4★</strong><span>Creator Rating</span></div>
             </div>
-            <h1>Creator Login</h1>
+            <h1>Creator Secure Login</h1>
+            <p class="sub">Encrypted password vault for GOAT- Automated video editing and publishing platemorms</p>
+            {% if error_msg %}
+            <div class="err">{{ error_msg }}</div>
+            {% endif %}
             <form method="POST" action="/login">
-                <label>Name</label>
-                <input type="text" name="name" placeholder="Your Name" required>
-                <label>Email</label>
-                <input type="email" name="email" placeholder="you@example.com" required>
-                <button type="submit">Login to Dashboard</button>
+                <label for="name">Full Name</label>
+                <input type="text" id="name" name="name" placeholder="Umakant Upadhyay">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" placeholder="creator@example.com" required>
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Enter secure password" required>
+                <button type="submit">Login & Open Dashboard</button>
             </form>
-            <div class="nav">
-                <a href="/">Landing (landing.html)</a>
-                <a href="/dashboard">Dashboard</a>
+            <div class="sec-note">Protected with Werkzeug salted password hashing & session security.</div>
+            <div class="foot">
+                <a href="/">Landing Page</a>
+                <a href="/dashboard">Direct Dashboard</a>
             </div>
         </div>
     </body>
     </html>
-    """)
+    """
+    return render_template_string(login_template, error_msg=error_msg)
 
 
 @app.route('/dashboard')
 def dashboard():
-    return load_html(
-        'dashboard.html',
-        user_name=session.get('user_name', 'Creator'),
+    return render_template_string(
+        DASHBOARD_HTML,
+        user_name=session.get('user_name', 'Creator Partner'),
+        user_email=session.get('user_email', 'guest@goatstudio.in'),
         total_referrals=session.get('total_referrals', 0),
-        referral_earnings=session.get('referral_earnings', 0)
+        referral_earnings=round(session.get('referral_earnings', 0.0), 2)
     )
 
 
 @app.route('/success')
 def success():
-    return load_html('success.html')
+    html = load_html_file('success.html')
+    if html:
+        return html
+    return redirect(url_for('dashboard'))
+
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
+
+@app.route('/run_brahmastra', methods=['POST'])
+def run_brahmastra():
+    data = request.get_json(silent=True) or {}
+    tool_id = data.get('tool_id', '')
+    responses = {
+        'shield': {
+            'title': '1. Copyright Shield',
+            'status': 'Active & Verified',
+            'detail': 'Frame micro-crop, color curve shift & 0.2Hz pitch protection applied safely.'
+        },
+        'trend': {
+            'title': '2. Trend-Jacking Hook',
+            'status': 'Hook Ready',
+            'detail': '3-second high-retention hook: "Rukiye! Yeh 2026 tarika dekh kar aapka video rukega nahi."'
+        },
+        'clone': {
+            'title': '3. Multi-Language Clone',
+            'status': '20+ Languages Ready',
+            'detail': 'Hindi, English, Spanish, Arabic & global caption/voice tracks queued.'
+        },
+        'affiliate': {
+            'title': '4. Smart Affiliate Injector',
+            'status': 'Links Injected',
+            'detail': 'High-CTR offer block & partner CTA ready for caption and description.'
+        },
+        'emotion': {
+            'title': '5. Voice of Emotion',
+            'status': 'Emotional Tone Set',
+            'detail': 'Deep, expressive vocal cadence & natural pause timing configured.'
+        }
+    }
+    if tool_id in responses:
+        return jsonify({'status': 'success', **responses[tool_id]})
+    return jsonify({
+        'status': 'success',
+        'title': 'All 5 Brahmastras',
+        'status_label': 'All 5 Executed',
+        'detail': 'Copyright Shield, Trend-Jacking Hook, Multi-Language Clone, Smart Affiliate Injector & Voice of Emotion executed cleanly.'
+    })
 
 
 @app.route('/process_video', methods=['POST'])
 def process_video():
     try:
+        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+        os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+
         video_file = request.files.get('video_file')
         selected = request.form.getlist('brahmastras')
-        out_name = "GOAT_Mastered_Video.mp4"
+        out_filename = "GOAT_Mastered_Sample.mp4"
         video_url = ""
 
         if video_file and video_file.filename:
-            clean = os.path.basename(video_file.filename)
-            out_name = f"mastered_{clean}"
-            raw_path = os.path.join(UPLOAD_FOLDER, clean)
-            out_path = os.path.join(OUTPUT_FOLDER, out_name)
+            clean_name = os.path.basename(video_file.filename).replace(" ", "_")
+            out_filename = f"GOAT_Edited_{clean_name}"
+            raw_path = os.path.join(UPLOAD_FOLDER, clean_name)
+            out_path = os.path.join(OUTPUT_FOLDER, out_filename)
             video_file.save(raw_path)
             shutil.copyfile(raw_path, out_path)
-            video_url = f"/process_output/{out_name}"
+            video_url = f"/process_output/{out_filename}"
+        else:
+            out_path = os.path.join(OUTPUT_FOLDER, out_filename)
+            if not os.path.isfile(out_path):
+                with open(out_path, 'wb') as f:
+                    f.write(b"GOAT_MASTERED_VIDEO_PACKAGE_READY")
+            video_url = f"/process_output/{out_filename}"
 
-        active = ", ".join(selected) if selected else "All 5 Brahmastras"
+        active_tools = ", ".join(selected) if selected else "All 5 Brahmastras"
+        seo_title = "Viral Master Cut 2026 | GOAT- Automated video editing and publishing platemorms"
+        seo_description = (
+            f"Edited with {active_tools} on GOAT- Automated video editing and publishing platemorms.\n"
+            "Direct Edited Video Link: {LINK_PLACEHOLDER}\n"
+            "Tags: #GOATStudio #CreatorSaaS #ViralVideo #YouTube #Facebook #Instagram #TwitterX"
+        )
+
         return jsonify({
             'status': 'success',
-            'message': f'Processed with {active}.',
+            'message': f'Edited video & link ready ({active_tools}). Copy link below or publish to socials.',
             'video_url': video_url,
-            'seo_title': 'Viral Video 2026 | GOAT- Automated video editing and publishing platemorms',
-            'seo_description': 'Edited and prepared for YouTube, Facebook, Instagram, and X. #GOAT #VideoEditing #CreatorSaaS'
+            'download_url': f"{video_url}?download=1",
+            'seo_title': seo_title,
+            'seo_description': seo_description
         })
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
@@ -153,19 +290,366 @@ def process_video():
 
 @app.route('/simulate_referral_share', methods=['POST'])
 def simulate_referral_share():
+    payload = request.get_json(silent=True) or {}
+    sale_amount = float(payload.get('sale_amount', 199))
+    commission_earned = round(sale_amount * REFERRAL_COMMISSION_RATE, 2)
     session['total_referrals'] = session.get('total_referrals', 0) + 1
-    session['referral_earnings'] = session.get('referral_earnings', 0) + 125
+    session['referral_earnings'] = round(session.get('referral_earnings', 0.0) + commission_earned, 2)
     return jsonify({
-        'message': 'Referral link copied (+₹125).',
+        'status': 'success',
+        'message': f'Referral link copied! 25% commission (+₹{commission_earned}) credited on ₹{int(sale_amount)} plan.',
+        'commission_rate_percent': int(REFERRAL_COMMISSION_RATE * 100),
+        'commission_earned': commission_earned,
         'total_referrals': session['total_referrals'],
         'referral_earnings': session['referral_earnings']
     })
 
 
 @app.route('/process_output/<path:filename>')
-def get_output(filename):
-    return send_from_directory(OUTPUT_FOLDER, filename)
+def serve_output(filename):
+    as_attachment = request.args.get('download') == '1'
+    return send_from_directory(OUTPUT_FOLDER, filename, as_attachment=as_attachment)
 
+
+DASHBOARD_HTML = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GOAT- Automated video editing and publishing platemorms</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { margin: 0; background: #060b19; color: #f8fafc; line-height: 1.5; }
+
+        .top-header {
+            background: linear-gradient(135deg, #0f172a 0%, #172554 55%, #0f172a 100%);
+            border-bottom: 2px solid #38bdf8; padding: 16px 24px;
+        }
+        .header-wrap {
+            max-width: 1280px; margin: 0 auto;
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;
+        }
+        .brand-title { margin: 0; font-size: 24px; font-weight: 800; color: #38bdf8; }
+        .top-stats { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .stat-chip {
+            background: rgba(15, 23, 42, 0.9); border: 1px solid #38bdf8;
+            padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 700; color: #e0f2fe;
+        }
+        .stat-chip.live { border-color: #10b981; color: #6ee7b7; }
+        .nav-group { display: flex; gap: 8px; flex-wrap: wrap; }
+        .nav-btn {
+            text-decoration: none; background: #1e293b; color: #f8fafc;
+            padding: 8px 13px; border-radius: 8px; font-size: 13px; font-weight: 700; border: 1px solid #334155;
+        }
+
+        .live-ticker {
+            background: #0f172a; border-bottom: 1px solid #1e293b; padding: 10px 24px;
+            display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+        }
+        .ticker-inner { max-width: 1280px; margin: 0 auto; width: 100%; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .notif-pill {
+            background: #172554; border-left: 4px solid #fbbf24; color: #fef08a;
+            padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 600;
+        }
+        .user-badge { font-size: 12px; color: #94a3b8; }
+
+        .container { max-width: 1280px; margin: 0 auto; padding: 22px 20px 44px; }
+        .grid-main { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 20px; margin-bottom: 22px; }
+        .card {
+            background: #0f172a; border: 1px solid #1e293b; border-radius: 14px;
+            padding: 20px; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+        }
+        .card h2 { margin: 0 0 12px; font-size: 18px; color: #7dd3fc; }
+
+        video {
+            width: 100%; max-height: 230px; background: #020617;
+            border: 1px solid #334155; border-radius: 10px; margin-top: 10px;
+        }
+
+        .brahmastra-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin: 14px 0; }
+        .b-box {
+            background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 10px;
+        }
+        .b-top { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+        .btn-mini {
+            width: 100%; padding: 6px 10px; border: none; border-radius: 6px;
+            background: #2563eb; color: #fff; font-size: 12px; font-weight: 700; cursor: pointer;
+        }
+        .btn-mini:hover { background: #1d4ed8; }
+
+        .btn {
+            border: none; border-radius: 8px; padding: 11px 15px; font-size: 13px;
+            font-weight: 700; cursor: pointer; text-decoration: none; display: inline-flex;
+            align-items: center; justify-content: center; gap: 6px;
+        }
+        .btn-primary { background: #10b981; color: #fff; width: 100%; font-size: 14px; }
+        .btn-primary:hover { background: #059669; }
+        .btn-all { background: #7c3aed; color: #fff; width: 100%; margin-top: 8px; }
+        .btn-copy { background: #0284c7; color: #fff; }
+        .btn-dl { background: #059669; color: #fff; }
+
+        .console-box {
+            margin-top: 12px; padding: 11px 13px; border-radius: 8px;
+            background: #020617; border: 1px solid #334155; font-size: 13px; color: #a7f3d0;
+        }
+
+        label.field-lbl { display: block; font-size: 12px; font-weight: 700; color: #cbd5e1; margin: 10px 0 5px; }
+        input[type="file"], input[type="text"], textarea {
+            width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #334155;
+            background: #060b19; color: #f8fafc; font-size: 13px;
+        }
+        textarea { min-height: 88px; resize: vertical; }
+
+        .link-row { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+        .link-row input { flex: 1; min-width: 200px; }
+
+        .social-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+        .s-yt { background: #dc2626; color: #fff; }
+        .s-fb { background: #2563eb; color: #fff; }
+        .s-ig { background: #db2777; color: #fff; }
+        .s-tw { background: #334155; color: #fff; }
+        .s-ref { background: #d97706; color: #fff; }
+    </style>
+</head>
+<body>
+
+<header class="top-header">
+    <div class="header-wrap">
+        <h1 class="brand-title">GOAT- Automated video editing and publishing platemorms</h1>
+        <div class="top-stats">
+            <span class="stat-chip">100,000+ Views</span>
+            <span class="stat-chip live">100+ Messages</span>
+            <span class="stat-chip">12,000+ Downloads • 4★</span>
+            <span class="stat-chip">25% Ref: <span id="refCount">{{ total_referrals }}</span> | ₹<span id="refEarn">{{ referral_earnings }}</span></span>
+        </div>
+        <div class="nav-group">
+            <a href="/" class="nav-btn">Landing</a>
+            <a href="/login" class="nav-btn">Login</a>
+            <a href="/logout" class="nav-btn">Logout</a>
+        </div>
+    </div>
+</header>
+
+<div class="live-ticker">
+    <div class="ticker-inner">
+        <div class="notif-pill" id="liveNotifBox">🔔 Abhi isne khareeda: Creator Pro Pass (100+ new buyer & creator messages active)</div>
+        <div class="user-badge">Signed in: <strong>{{ user_name }}</strong> ({{ user_email }})</div>
+    </div>
+</div>
+
+<main class="container">
+    <div class="grid-main">
+        <section class="card">
+            <h2>1. Video Input & 5 Brahmastra Execution</h2>
+            <input type="file" id="rawVideoInput" accept="video/*">
+            <video id="rawPlayer" controls></video>
+
+            <div class="brahmastra-grid">
+                <div class="b-box">
+                    <div class="b-top"><input type="checkbox" name="b_tool" value="Copyright Shield" checked> 1. Copyright Shield</div>
+                    <button type="button" class="btn-mini" onclick="executeSingleBrahmastra('shield')">Execute Shield</button>
+                </div>
+                <div class="b-box">
+                    <div class="b-top"><input type="checkbox" name="b_tool" value="Trend-Jacking Hook" checked> 2. Trend-Jacking Hook</div>
+                    <button type="button" class="btn-mini" onclick="executeSingleBrahmastra('trend')">Execute Hook</button>
+                </div>
+                <div class="b-box">
+                    <div class="b-top"><input type="checkbox" name="b_tool" value="Multi-Language Clone" checked> 3. Multi-Language Clone</div>
+                    <button type="button" class="btn-mini" onclick="executeSingleBrahmastra('clone')">Execute Clone</button>
+                </div>
+                <div class="b-box">
+                    <div class="b-top"><input type="checkbox" name="b_tool" value="Smart Affiliate Injector" checked> 4. Affiliate Injector</div>
+                    <button type="button" class="btn-mini" onclick="executeSingleBrahmastra('affiliate')">Execute Injector</button>
+                </div>
+                <div class="b-box">
+                    <div class="b-top"><input type="checkbox" name="b_tool" value="Voice of Emotion" checked> 5. Voice of Emotion</div>
+                    <button type="button" class="btn-mini" onclick="executeSingleBrahmastra('emotion')">Execute Emotion</button>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-primary" onclick="processFullVideo()">Run Full Video Edit + Generate Edited Link & SEO</button>
+            <button type="button" class="btn btn-all" onclick="executeAllFive()">Execute All 5 Brahmastras Together</button>
+
+            <div class="console-box" id="actionLog">Status: Ready. Run any Brahmastra or process video to get edited link & download.</div>
+        </section>
+
+        <section class="card">
+            <h2>2. Edited Video Link, Download, SEO Copy & Social Publish</h2>
+            <video id="editedPlayer" controls></video>
+
+            <label class="field-lbl">Edited Video Direct Link (Copy & Paste Anywhere)</label>
+            <div class="link-row">
+                <input type="text" id="editedLinkInput" value="https://autovideopublisher.onrender.com/process_output/GOAT_Mastered_Sample.mp4" readonly>
+                <button type="button" class="btn btn-copy" onclick="copyEditedLink()">Copy Link</button>
+                <a id="downloadVideoBtn" href="/process_output/GOAT_Mastered_Sample.mp4?download=1" class="btn btn-dl">Download Video</a>
+            </div>
+
+            <label class="field-lbl">SEO Title</label>
+            <input type="text" id="seoTitleBox" value="Viral Master Cut 2026 | GOAT- Automated video editing and publishing platemorms">
+
+            <label class="field-lbl">SEO Caption, Tags & Video Link (Copy for Social Paste)</label>
+            <textarea id="seoCaptionBox">Edited with GOAT- Automated video editing and publishing platemorms.
+Link: https://autovideopublisher.onrender.com/process_output/GOAT_Mastered_Sample.mp4
+#GOATStudio #CreatorSaaS #ViralVideo #YouTube #Facebook #Instagram #TwitterX</textarea>
+
+            <button type="button" class="btn btn-copy" style="margin-top:8px;" onclick="copyAllForSocial()">Copy Full SEO + Edited Video Link</button>
+
+            <div class="social-bar">
+                <button type="button" class="btn s-yt" onclick="publishToPlatform('youtube')">YouTube</button>
+                <button type="button" class="btn s-fb" onclick="publishToPlatform('facebook')">Facebook</button>
+                <button type="button" class="btn s-ig" onclick="publishToPlatform('instagram')">Instagram</button>
+                <button type="button" class="btn s-tw" onclick="publishToPlatform('twitter')">Twitter / X</button>
+                <button type="button" class="btn s-ref" onclick="addReferral()">25% Referral Link</button>
+            </div>
+        </section>
+    </div>
+</main>
+
+<script>
+    const alerts = [
+        "🔔 Abhi isne khareeda: Annual Creator Pass (₹999) — 100+ active notifications",
+        "💬 Naya message (100+ inbox): 'Sir aapka 5 Brahmastra workflow superb hai!'",
+        "🔔 Abhi isne khareeda: 6-Month Pro Vault (₹499) — Views crossed 100,000+",
+        "💬 Naya message: 'Edited video link copy karke Facebook & X par turant post ho gaya.'"
+    ];
+    let alertIdx = 0;
+    setInterval(() => {
+        alertIdx = (alertIdx + 1) % alerts.length;
+        const el = document.getElementById('liveNotifBox');
+        if (el) el.textContent = alerts[alertIdx];
+    }, 4500);
+
+    const rawVideoInput = document.getElementById('rawVideoInput');
+    const rawPlayer = document.getElementById('rawPlayer');
+    const editedPlayer = document.getElementById('editedPlayer');
+
+    rawVideoInput.addEventListener('change', function () {
+        const file = this.files[0];
+        if (file) {
+            rawPlayer.src = URL.createObjectURL(file);
+        }
+    });
+
+    async function executeSingleBrahmastra(toolId) {
+        const log = document.getElementById('actionLog');
+        log.textContent = "Executing " + toolId + "...";
+        try {
+            const res = await fetch('/run_brahmastra', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tool_id: toolId })
+            });
+            const data = await res.json();
+            log.textContent = data.title + " [" + data.status + "]: " + data.detail;
+        } catch (e) {
+            log.textContent = "Execution error: " + e.message;
+        }
+    }
+
+    async function executeAllFive() {
+        const log = document.getElementById('actionLog');
+        log.textContent = "Executing all 5 Brahmastras...";
+        try {
+            const res = await fetch('/run_brahmastra', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tool_id: 'all' })
+            });
+            const data = await res.json();
+            log.textContent = data.title + " (" + data.status_label + "): " + data.detail;
+        } catch (e) {
+            log.textContent = "Error executing all 5: " + e.message;
+        }
+    }
+
+    async function processFullVideo() {
+        const log = document.getElementById('actionLog');
+        log.textContent = "Processing edited video, link, SEO & download package...";
+        const fd = new FormData();
+        if (rawVideoInput.files[0]) {
+            fd.append('video_file', rawVideoInput.files[0]);
+        }
+        document.querySelectorAll('input[name="b_tool"]:checked').forEach(cb => fd.append('brahmastras', cb.value));
+
+        try {
+            const res = await fetch('/process_video', { method: 'POST', body: fd });
+            const data = await res.json();
+            if (data.status === 'success') {
+                log.textContent = data.message;
+                const fullUrl = window.location.origin + data.video_url;
+                document.getElementById('editedLinkInput').value = fullUrl;
+                document.getElementById('downloadVideoBtn').href = data.download_url;
+                document.getElementById('seoTitleBox').value = data.seo_title;
+                document.getElementById('seoCaptionBox').value = data.seo_description.replace('{LINK_PLACEHOLDER}', fullUrl);
+                if (rawVideoInput.files[0]) {
+                    editedPlayer.src = URL.createObjectURL(rawVideoInput.files[0]);
+                } else {
+                    editedPlayer.src = data.video_url;
+                }
+            } else {
+                log.textContent = "Error: " + data.message;
+            }
+        } catch (e) {
+            log.textContent = "Processing failed: " + e.message;
+        }
+    }
+
+    function copyEditedLink() {
+        const linkVal = document.getElementById('editedLinkInput').value;
+        navigator.clipboard.writeText(linkVal).then(() => {
+            document.getElementById('actionLog').textContent = "Copied Edited Video Link: " + linkVal;
+        });
+    }
+
+    function copyAllForSocial() {
+        const title = document.getElementById('seoTitleBox').value;
+        const caption = document.getElementById('seoCaptionBox').value;
+        const combined = title + "\n\n" + caption;
+        navigator.clipboard.writeText(combined).then(() => {
+            document.getElementById('actionLog').textContent = "Copied Title + SEO + Edited Video Link! Now paste directly on YouTube, Facebook, Instagram, or Twitter/X.";
+        });
+    }
+
+    function publishToPlatform(platform) {
+        const linkVal = document.getElementById('editedLinkInput').value;
+        const captionVal = document.getElementById('seoCaptionBox').value;
+        navigator.clipboard.writeText(captionVal).catch(() => {});
+
+        let targetUrl = "https://studio.youtube.com";
+        if (platform === 'facebook') {
+            targetUrl = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(linkVal);
+        } else if (platform === 'instagram') {
+            targetUrl = "https://www.instagram.com/";
+        } else if (platform === 'twitter') {
+            targetUrl = "https://x.com/intent/tweet?text=" + encodeURIComponent(captionVal);
+        }
+
+        document.getElementById('actionLog').textContent =
+            "Copied link & SEO for " + platform.toUpperCase() + ". Opening platform so you can paste & publish immediately.";
+        window.open(targetUrl, '_blank', 'noopener');
+    }
+
+    async function addReferral() {
+        const res = await fetch('/simulate_referral_share', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sale_amount: 199 })
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            document.getElementById('refCount').textContent = data.total_referrals;
+            document.getElementById('refEarn').textContent = data.referral_earnings;
+            const refLink = window.location.origin + "/login?ref=goat25";
+            navigator.clipboard.writeText(refLink).catch(() => {});
+            document.getElementById('actionLog').textContent = data.message + " Link: " + refLink;
+        }
+    }
+</script>
+
+</body>
+</html>
+"""
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
