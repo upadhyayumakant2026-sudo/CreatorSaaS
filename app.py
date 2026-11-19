@@ -364,14 +364,25 @@ DASHBOARD_HTML = """
         .card h2 { margin: 0 0 12px; font-size: 18px; color: #7dd3fc; }
 
         .preview-stage {
-            position: relative; width: 100%; height: 240px; background: #020617;
+            position: relative; width: 100%; min-height: 240px; background: #020617;
             border: 1px solid #334155; border-radius: 10px; margin-top: 10px; overflow: hidden;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
         .preview-stage video {
-            width: 100%; height: 100%; object-fit: contain; display: block; background: #020617;
+            width: 100%; height: 240px; object-fit: contain; display: block; background: #020617;
         }
-        .preview-stage canvas {
-            width: 100%; height: 100%; object-fit: contain; display: none; background: #020617;
+        .raw-visual-card {
+            display: none; width: 100%; padding: 18px; text-align: center; background: #020617;
+        }
+        .raw-visual-card canvas {
+            max-width: 100%; max-height: 165px; border-radius: 8px; border: 1px solid #1e293b; display: none; margin: 0 auto 10px;
+        }
+        .preview-actions-bar {
+            display: flex; gap: 10px; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; margin-top: 8px; font-size: 12px;
+        }
+        .open-raw-link {
+            color: #38bdf8; text-decoration: underline; font-weight: 700; display: none;
         }
         .file-info-badge {
             margin-top: 6px; font-size: 12px; color: #38bdf8; font-weight: 600;
@@ -452,10 +463,16 @@ DASHBOARD_HTML = """
         <section class="card">
             <h2>1. Raw Video Preview & 5 Brahmastra Execution</h2>
             <input type="file" id="rawVideoInput" accept="video/*,.mp4,.webm,.ogg,.mov,.m4v,.mkv,.avi">
-            <div class="file-info-badge" id="rawFileInfo">No video selected yet — choose your raw video to verify preview below.</div>
+            <div class="preview-actions-bar">
+                <span class="file-info-badge" id="rawFileInfo">No video selected yet — choose your raw video to verify preview below.</span>
+                <a id="openRawTabLink" class="open-raw-link" href="#" target="_blank" rel="noopener">Open Raw Video in Browser Tab</a>
+            </div>
             <div class="preview-stage">
-                <video id="rawPlayer" controls playsinline preload="auto"></video>
-                <canvas id="rawFallbackCanvas"></canvas>
+                <video id="rawPlayer" controls playsinline preload="metadata"></video>
+                <div class="raw-visual-card" id="rawVisualCard">
+                    <canvas id="rawFallbackCanvas"></canvas>
+                    <div id="rawFallbackText" style="font-size:13px;color:#e2e8f0;"></div>
+                </div>
             </div>
 
             <div class="brahmastra-grid">
@@ -490,8 +507,11 @@ DASHBOARD_HTML = """
         <section class="card">
             <h2>2. Edited Video Link, Download, SEO Copy & Social Publish</h2>
             <div class="preview-stage">
-                <video id="editedPlayer" controls playsinline preload="auto"></video>
-                <canvas id="editedFallbackCanvas"></canvas>
+                <video id="editedPlayer" controls playsinline preload="metadata"></video>
+                <div class="raw-visual-card" id="editedVisualCard">
+                    <canvas id="editedFallbackCanvas"></canvas>
+                    <div id="editedFallbackText" style="font-size:13px;color:#e2e8f0;"></div>
+                </div>
             </div>
 
             <label class="field-lbl">Edited Video Direct Link (Copy & Paste Anywhere)</label>
@@ -544,82 +564,98 @@ Link: https://autovideopublisher.onrender.com/process_output/GOAT_Mastered_Sampl
 
     const rawVideoInput = document.getElementById('rawVideoInput');
     const rawPlayer = document.getElementById('rawPlayer');
+    const rawVisualCard = document.getElementById('rawVisualCard');
     const rawFallbackCanvas = document.getElementById('rawFallbackCanvas');
+    const rawFallbackText = document.getElementById('rawFallbackText');
     const rawFileInfo = document.getElementById('rawFileInfo');
-    const editedPlayer = document.getElementById('editedPlayer');
-    const editedFallbackCanvas = document.getElementById('editedFallbackCanvas');
-    let currentRawObjectUrl = null;
+    const openRawTabLink = document.getElementById('openRawTabLink');
 
-    function attachPreviewWithFrameFallback(videoEl, canvasEl, objectUrl, fileName) {
+    const editedPlayer = document.getElementById('editedPlayer');
+    const editedVisualCard = document.getElementById('editedVisualCard');
+    const editedFallbackCanvas = document.getElementById('editedFallbackCanvas');
+    const editedFallbackText = document.getElementById('editedFallbackText');
+
+    let currentRawObjectUrl = null;
+    let currentRawDataUrl = null;
+    let currentRawFileName = "";
+
+    function renderVideoPreview(videoEl, visualCardEl, canvasEl, textEl, file, objectUrl, dataUrl) {
+        visualCardEl.style.display = 'none';
         canvasEl.style.display = 'none';
         videoEl.style.display = 'block';
-        videoEl.removeAttribute('src');
+
+        const chosenSrc = objectUrl || dataUrl || '';
+        videoEl.src = chosenSrc;
         videoEl.load();
 
-        const srcTag = document.createElement('source');
-        srcTag.src = objectUrl;
-        if (fileName.toLowerCase().endsWith('.webm')) {
-            srcTag.type = 'video/webm';
-        } else if (fileName.toLowerCase().endsWith('.ogg') || fileName.toLowerCase().endsWith('.ogv')) {
-            srcTag.type = 'video/ogg';
-        } else {
-            srcTag.type = 'video/mp4';
+        let frameCaptured = false;
+
+        function paintFrameToCanvas() {
+            try {
+                if (videoEl.videoWidth > 0 && videoEl.videoHeight > 0) {
+                    canvasEl.width = Math.min(videoEl.videoWidth, 640);
+                    canvasEl.height = Math.round((videoEl.videoHeight / videoEl.videoWidth) * canvasEl.width) || 200;
+                    const ctx = canvasEl.getContext('2d');
+                    ctx.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height);
+                    canvasEl.style.display = 'block';
+                    visualCardEl.style.display = 'block';
+                    frameCaptured = true;
+                }
+            } catch (e) {}
         }
-        videoEl.innerHTML = '';
-        videoEl.appendChild(srcTag);
-        videoEl.src = objectUrl;
 
         videoEl.onloadedmetadata = function () {
             try {
-                videoEl.currentTime = Math.min(0.1, (videoEl.duration || 1) * 0.05);
+                if (videoEl.duration && isFinite(videoEl.duration) && videoEl.duration > 0) {
+                    videoEl.currentTime = Math.min(0.15, videoEl.duration * 0.05);
+                }
             } catch (e) {}
+            paintFrameToCanvas();
         };
 
         videoEl.onloadeddata = function () {
-            try {
-                const ctx = canvasEl.getContext('2d');
-                if (videoEl.videoWidth > 0 && videoEl.videoHeight > 0) {
-                    canvasEl.width = videoEl.videoWidth;
-                    canvasEl.height = videoEl.videoHeight;
-                    ctx.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height);
-                }
-            } catch (e) {}
+            paintFrameToCanvas();
         };
 
-        videoEl.onerror = function () {
-            // Draw visual file card on canvas if browser cannot decode container directly
-            videoEl.style.display = 'none';
-            canvasEl.style.display = 'block';
-            canvasEl.width = 640;
-            canvasEl.height = 360;
-            const ctx = canvasEl.getContext('2d');
-            ctx.fillStyle = '#0f172a';
-            ctx.fillRect(0, 0, canvasEl.width, canvasEl.height);
-            ctx.fillStyle = '#38bdf8';
-            ctx.font = 'bold 22px Segoe UI, sans-serif';
-            ctx.fillText('Raw Video Selected:', 32, 130);
-            ctx.fillStyle = '#f8fafc';
-            ctx.font = '18px Segoe UI, sans-serif';
-            ctx.fillText(fileName, 32, 170);
-            ctx.fillStyle = '#34d399';
-            ctx.font = '15px Segoe UI, sans-serif';
-            ctx.fillText('Ready for 5 Brahmastras & Server Processing', 32, 215);
+        videoEl.onseeked = function () {
+            paintFrameToCanvas();
         };
 
-        videoEl.load();
+        setTimeout(() => {
+            if (!frameCaptured && (videoEl.readyState < 2 || videoEl.videoWidth === 0)) {
+                visualCardEl.style.display = 'block';
+                canvasEl.style.display = 'none';
+                textEl.innerHTML =
+                    "<strong>Selected File:</strong> " + file.name +
+                    "<br><span style='color:#38bdf8;'>Preview ready (" + (file.size / (1024 * 1024)).toFixed(2) + " MB). Click 'Open Raw Video in Browser Tab' above if your browser codec restricts inline playback.</span>";
+            }
+        }, 1200);
     }
 
     rawVideoInput.addEventListener('change', function () {
         const file = this.files && this.files[0];
         if (!file) return;
+
+        currentRawFileName = file.name;
         if (currentRawObjectUrl) {
             URL.revokeObjectURL(currentRawObjectUrl);
         }
         currentRawObjectUrl = URL.createObjectURL(file);
+
         const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
         rawFileInfo.textContent = "Selected Raw Video: " + file.name + " (" + sizeMb + " MB)";
-        attachPreviewWithFrameFallback(rawPlayer, rawFallbackCanvas, currentRawObjectUrl, file.name);
-        document.getElementById('actionLog').textContent = "Raw video preview loaded: " + file.name;
+        openRawTabLink.href = currentRawObjectUrl;
+        openRawTabLink.style.display = 'inline';
+
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+            currentRawDataUrl = ev.target.result;
+            renderVideoPreview(rawPlayer, rawVisualCard, rawFallbackCanvas, rawFallbackText, file, currentRawObjectUrl, currentRawDataUrl);
+        };
+        reader.readAsDataURL(file);
+
+        renderVideoPreview(rawPlayer, rawVisualCard, rawFallbackCanvas, rawFallbackText, file, currentRawObjectUrl, null);
+        document.getElementById('actionLog').textContent = "Raw video loaded: " + file.name + " (" + sizeMb + " MB).";
     });
 
     async function executeSingleBrahmastra(toolId) {
@@ -673,10 +709,19 @@ Link: https://autovideopublisher.onrender.com/process_output/GOAT_Mastered_Sampl
                 document.getElementById('downloadVideoBtn').href = data.download_url;
                 document.getElementById('seoTitleBox').value = data.seo_title;
                 document.getElementById('seoCaptionBox').value = data.seo_description.replace('{LINK_PLACEHOLDER}', fullUrl);
-                if (currentRawObjectUrl && rawVideoInput.files[0]) {
-                    attachPreviewWithFrameFallback(editedPlayer, editedFallbackCanvas, currentRawObjectUrl, rawVideoInput.files[0].name);
+
+                if (rawVideoInput.files[0] && (currentRawObjectUrl || currentRawDataUrl)) {
+                    renderVideoPreview(
+                        editedPlayer,
+                        editedVisualCard,
+                        editedFallbackCanvas,
+                        editedFallbackText,
+                        rawVideoInput.files[0],
+                        currentRawObjectUrl,
+                        currentRawDataUrl
+                    );
                 } else {
-                    editedFallbackCanvas.style.display = 'none';
+                    editedVisualCard.style.display = 'none';
                     editedPlayer.style.display = 'block';
                     editedPlayer.src = data.video_url;
                     editedPlayer.load();
