@@ -363,9 +363,15 @@ DASHBOARD_HTML = """
         }
         .card h2 { margin: 0 0 12px; font-size: 18px; color: #7dd3fc; }
 
-        video {
-            width: 100%; height: 240px; object-fit: contain; background: #020617;
-            border: 1px solid #334155; border-radius: 10px; margin-top: 10px; display: block;
+        .preview-stage {
+            position: relative; width: 100%; height: 240px; background: #020617;
+            border: 1px solid #334155; border-radius: 10px; margin-top: 10px; overflow: hidden;
+        }
+        .preview-stage video {
+            width: 100%; height: 100%; object-fit: contain; display: block; background: #020617;
+        }
+        .preview-stage canvas {
+            width: 100%; height: 100%; object-fit: contain; display: none; background: #020617;
         }
         .file-info-badge {
             margin-top: 6px; font-size: 12px; color: #38bdf8; font-weight: 600;
@@ -445,9 +451,12 @@ DASHBOARD_HTML = """
     <div class="grid-main">
         <section class="card">
             <h2>1. Raw Video Preview & 5 Brahmastra Execution</h2>
-            <input type="file" id="rawVideoInput" accept="video/*">
+            <input type="file" id="rawVideoInput" accept="video/*,.mp4,.webm,.ogg,.mov,.m4v,.mkv,.avi">
             <div class="file-info-badge" id="rawFileInfo">No video selected yet — choose your raw video to verify preview below.</div>
-            <video id="rawPlayer" controls playsinline preload="metadata"></video>
+            <div class="preview-stage">
+                <video id="rawPlayer" controls playsinline preload="auto"></video>
+                <canvas id="rawFallbackCanvas"></canvas>
+            </div>
 
             <div class="brahmastra-grid">
                 <div class="b-box">
@@ -480,7 +489,10 @@ DASHBOARD_HTML = """
 
         <section class="card">
             <h2>2. Edited Video Link, Download, SEO Copy & Social Publish</h2>
-            <video id="editedPlayer" controls playsinline preload="metadata"></video>
+            <div class="preview-stage">
+                <video id="editedPlayer" controls playsinline preload="auto"></video>
+                <canvas id="editedFallbackCanvas"></canvas>
+            </div>
 
             <label class="field-lbl">Edited Video Direct Link (Copy & Paste Anywhere)</label>
             <div class="link-row">
@@ -516,7 +528,7 @@ Link: https://autovideopublisher.onrender.com/process_output/GOAT_Mastered_Sampl
         "🔔 Pooja Sharma, Jaipur ne abhi khareeda: 6-Month Pro Vault (₹499)",
         "🔔 Amit Verma, Lucknow ne abhi khareeda: Monthly Starter Plan (₹199)",
         "🔔 Sneha Joshi, Haldwani ne abhi khareeda: Annual Creator Pass (₹999)",
-        "🔔Vikram Rathore, Indore ne abhi khareeda: 6-Month Pro Vault (₹499)",
+        "🔔 Vikram Rathore, Indore ne abhi khareeda: 6-Month Pro Vault (₹499)",
         "🔔 Neha Kulkarni, Pune ne abhi khareeda: Annual Creator Pass (₹999)",
         "🔔 Saurabh Tiwari, Varanasi ne abhi khareeda: 6-Month Pro Vault (₹499)",
         "🔔 Ankit Negi, Almora ne abhi khareeda: Annual Creator Pass (₹999)",
@@ -532,9 +544,70 @@ Link: https://autovideopublisher.onrender.com/process_output/GOAT_Mastered_Sampl
 
     const rawVideoInput = document.getElementById('rawVideoInput');
     const rawPlayer = document.getElementById('rawPlayer');
+    const rawFallbackCanvas = document.getElementById('rawFallbackCanvas');
     const rawFileInfo = document.getElementById('rawFileInfo');
     const editedPlayer = document.getElementById('editedPlayer');
+    const editedFallbackCanvas = document.getElementById('editedFallbackCanvas');
     let currentRawObjectUrl = null;
+
+    function attachPreviewWithFrameFallback(videoEl, canvasEl, objectUrl, fileName) {
+        canvasEl.style.display = 'none';
+        videoEl.style.display = 'block';
+        videoEl.removeAttribute('src');
+        videoEl.load();
+
+        const srcTag = document.createElement('source');
+        srcTag.src = objectUrl;
+        if (fileName.toLowerCase().endsWith('.webm')) {
+            srcTag.type = 'video/webm';
+        } else if (fileName.toLowerCase().endsWith('.ogg') || fileName.toLowerCase().endsWith('.ogv')) {
+            srcTag.type = 'video/ogg';
+        } else {
+            srcTag.type = 'video/mp4';
+        }
+        videoEl.innerHTML = '';
+        videoEl.appendChild(srcTag);
+        videoEl.src = objectUrl;
+
+        videoEl.onloadedmetadata = function () {
+            try {
+                videoEl.currentTime = Math.min(0.1, (videoEl.duration || 1) * 0.05);
+            } catch (e) {}
+        };
+
+        videoEl.onloadeddata = function () {
+            try {
+                const ctx = canvasEl.getContext('2d');
+                if (videoEl.videoWidth > 0 && videoEl.videoHeight > 0) {
+                    canvasEl.width = videoEl.videoWidth;
+                    canvasEl.height = videoEl.videoHeight;
+                    ctx.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height);
+                }
+            } catch (e) {}
+        };
+
+        videoEl.onerror = function () {
+            // Draw visual file card on canvas if browser cannot decode container directly
+            videoEl.style.display = 'none';
+            canvasEl.style.display = 'block';
+            canvasEl.width = 640;
+            canvasEl.height = 360;
+            const ctx = canvasEl.getContext('2d');
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, 0, canvasEl.width, canvasEl.height);
+            ctx.fillStyle = '#38bdf8';
+            ctx.font = 'bold 22px Segoe UI, sans-serif';
+            ctx.fillText('Raw Video Selected:', 32, 130);
+            ctx.fillStyle = '#f8fafc';
+            ctx.font = '18px Segoe UI, sans-serif';
+            ctx.fillText(fileName, 32, 170);
+            ctx.fillStyle = '#34d399';
+            ctx.font = '15px Segoe UI, sans-serif';
+            ctx.fillText('Ready for 5 Brahmastras & Server Processing', 32, 215);
+        };
+
+        videoEl.load();
+    }
 
     rawVideoInput.addEventListener('change', function () {
         const file = this.files && this.files[0];
@@ -543,11 +616,10 @@ Link: https://autovideopublisher.onrender.com/process_output/GOAT_Mastered_Sampl
             URL.revokeObjectURL(currentRawObjectUrl);
         }
         currentRawObjectUrl = URL.createObjectURL(file);
-        rawPlayer.src = currentRawObjectUrl;
-        rawPlayer.load();
         const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
         rawFileInfo.textContent = "Selected Raw Video: " + file.name + " (" + sizeMb + " MB)";
-        document.getElementById('actionLog').textContent = "Raw video loaded in preview player: " + file.name;
+        attachPreviewWithFrameFallback(rawPlayer, rawFallbackCanvas, currentRawObjectUrl, file.name);
+        document.getElementById('actionLog').textContent = "Raw video preview loaded: " + file.name;
     });
 
     async function executeSingleBrahmastra(toolId) {
@@ -601,10 +673,11 @@ Link: https://autovideopublisher.onrender.com/process_output/GOAT_Mastered_Sampl
                 document.getElementById('downloadVideoBtn').href = data.download_url;
                 document.getElementById('seoTitleBox').value = data.seo_title;
                 document.getElementById('seoCaptionBox').value = data.seo_description.replace('{LINK_PLACEHOLDER}', fullUrl);
-                if (currentRawObjectUrl) {
-                    editedPlayer.src = currentRawObjectUrl;
-                    editedPlayer.load();
+                if (currentRawObjectUrl && rawVideoInput.files[0]) {
+                    attachPreviewWithFrameFallback(editedPlayer, editedFallbackCanvas, currentRawObjectUrl, rawVideoInput.files[0].name);
                 } else {
+                    editedFallbackCanvas.style.display = 'none';
+                    editedPlayer.style.display = 'block';
                     editedPlayer.src = data.video_url;
                     editedPlayer.load();
                 }
