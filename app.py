@@ -59,7 +59,7 @@ def home():
     html = load_html_file('landing.html')
     if html:
         return html
-    return redirect(url_for('dashboard'))
+    return redirect(url_for('login'))
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -140,8 +140,8 @@ def login():
             }
             button:hover { background: #059669; }
             .sec-note { margin-top: 12px; font-size: 12px; color: #94a3b8; text-align: center; }
-            .foot { display: flex; justify-content: space-between; margin-top: 16px; font-size: 13px; }
-            .foot a { color: #38bdf8; text-decoration: none; }
+            .foot { display: flex; justify-content: center; margin-top: 16px; font-size: 13px; }
+            .foot a { color: #38bdf8; text-decoration: none; font-weight: 600; }
         </style>
     </head>
     <body>
@@ -157,7 +157,7 @@ def login():
             {% endif %}
             <form method="POST" action="/login">
                 <label for="name">Full Name</label>
-                <input type="text" id="name" name="name" placeholder="Umakant Upadhyay">
+                <input type="text" id="name" name="name" placeholder="Umakant Upadhyay" required>
                 <label for="email">Email Address</label>
                 <input type="email" id="email" name="email" placeholder="creator@example.com" required>
                 <label for="password">Password</label>
@@ -166,8 +166,7 @@ def login():
             </form>
             <div class="sec-note">Protected with Werkzeug salted password hashing & session security.</div>
             <div class="foot">
-                <a href="/">Landing Page</a>
-                <a href="/dashboard">Direct Dashboard</a>
+                <a href="/">← Back to Landing Page</a>
             </div>
         </div>
     </body>
@@ -178,10 +177,12 @@ def login():
 
 @app.route('/dashboard')
 def dashboard():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
     return render_template_string(
         DASHBOARD_HTML,
         user_name=session.get('user_name', 'Creator Partner'),
-        user_email=session.get('user_email', 'guest@goatstudio.in'),
+        user_email=session.get('user_email', ''),
         total_referrals=session.get('total_referrals', 0),
         referral_earnings=round(session.get('referral_earnings', 0.0), 2)
     )
@@ -363,8 +364,11 @@ DASHBOARD_HTML = """
         .card h2 { margin: 0 0 12px; font-size: 18px; color: #7dd3fc; }
 
         video {
-            width: 100%; max-height: 230px; background: #020617;
-            border: 1px solid #334155; border-radius: 10px; margin-top: 10px;
+            width: 100%; height: 240px; object-fit: contain; background: #020617;
+            border: 1px solid #334155; border-radius: 10px; margin-top: 10px; display: block;
+        }
+        .file-info-badge {
+            margin-top: 6px; font-size: 12px; color: #38bdf8; font-weight: 600;
         }
 
         .brahmastra-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin: 14px 0; }
@@ -425,7 +429,6 @@ DASHBOARD_HTML = """
         </div>
         <div class="nav-group">
             <a href="/" class="nav-btn">Landing</a>
-            <a href="/login" class="nav-btn">Login</a>
             <a href="/logout" class="nav-btn">Logout</a>
         </div>
     </div>
@@ -433,7 +436,7 @@ DASHBOARD_HTML = """
 
 <div class="live-ticker">
     <div class="ticker-inner">
-        <div class="notif-pill" id="liveNotifBox">🔔 Abhi isne khareeda: Creator Pro Pass (100+ new buyer & creator messages active)</div>
+        <div class="notif-pill" id="liveNotifBox">🔔 Rajesh, Dehradun ne abhi khareeda: Annual Creator Pass (₹999)</div>
         <div class="user-badge">Signed in: <strong>{{ user_name }}</strong> ({{ user_email }})</div>
     </div>
 </div>
@@ -441,9 +444,10 @@ DASHBOARD_HTML = """
 <main class="container">
     <div class="grid-main">
         <section class="card">
-            <h2>1. Video Input & 5 Brahmastra Execution</h2>
+            <h2>1. Raw Video Preview & 5 Brahmastra Execution</h2>
             <input type="file" id="rawVideoInput" accept="video/*">
-            <video id="rawPlayer" controls></video>
+            <div class="file-info-badge" id="rawFileInfo">No video selected yet — choose your raw video to verify preview below.</div>
+            <video id="rawPlayer" controls playsinline preload="metadata"></video>
 
             <div class="brahmastra-grid">
                 <div class="b-box">
@@ -471,12 +475,12 @@ DASHBOARD_HTML = """
             <button type="button" class="btn btn-primary" onclick="processFullVideo()">Run Full Video Edit + Generate Edited Link & SEO</button>
             <button type="button" class="btn btn-all" onclick="executeAllFive()">Execute All 5 Brahmastras Together</button>
 
-            <div class="console-box" id="actionLog">Status: Ready. Run any Brahmastra or process video to get edited link & download.</div>
+            <div class="console-box" id="actionLog">Status: Ready. Select raw video to verify preview, then run any Brahmastra.</div>
         </section>
 
         <section class="card">
             <h2>2. Edited Video Link, Download, SEO Copy & Social Publish</h2>
-            <video id="editedPlayer" controls></video>
+            <video id="editedPlayer" controls playsinline preload="metadata"></video>
 
             <label class="field-lbl">Edited Video Direct Link (Copy & Paste Anywhere)</label>
             <div class="link-row">
@@ -507,28 +511,43 @@ Link: https://autovideopublisher.onrender.com/process_output/GOAT_Mastered_Sampl
 </main>
 
 <script>
-    const alerts = [
-        "🔔 Abhi isne khareeda: Annual Creator Pass (₹999) — 100+ active notifications",
-        "💬 Naya message (100+ inbox): 'Sir aapka 5 Brahmastra workflow superb hai!'",
-        "🔔 Abhi isne khareeda: 6-Month Pro Vault (₹499) — Views crossed 100,000+",
-        "💬 Naya message: 'Edited video link copy karke Facebook & X par turant post ho gaya.'"
+    const buyerNotifications = [
+        "🔔 Rajesh, Dehradun ne abhi khareeda: Annual Creator Pass (₹999)",
+        "🔔 Pooja Sharma, Jaipur ne abhi khareeda: 6-Month Pro Vault (₹499)",
+        "🔔 Amit Verma, Lucknow ne abhi khareeda: Monthly Starter Plan (₹199)",
+        "🔔 Sneha Joshi, Haldwani ne abhi khareeda: Annual Creator Pass (₹999)",
+        "🔔Vikram Rathore, Indore ne abhi khareeda: 6-Month Pro Vault (₹499)",
+        "🔔 Neha Kulkarni, Pune ne abhi khareeda: Annual Creator Pass (₹999)",
+        "🔔 Saurabh Tiwari, Varanasi ne abhi khareeda: 6-Month Pro Vault (₹499)",
+        "🔔 Ankit Negi, Almora ne abhi khareeda: Annual Creator Pass (₹999)",
+        "🔔 Kavita Nair, Kochi ne abhi khareeda: Monthly Starter Plan (₹199)",
+        "🔔 Rohit Bansal, Chandigarh ne abhi khareeda: Annual Creator Pass (₹999)"
     ];
-    let alertIdx = 0;
+    let buyerIdx = 0;
     setInterval(() => {
-        alertIdx = (alertIdx + 1) % alerts.length;
+        buyerIdx = (buyerIdx + 1) % buyerNotifications.length;
         const el = document.getElementById('liveNotifBox');
-        if (el) el.textContent = alerts[alertIdx];
-    }, 4500);
+        if (el) el.textContent = buyerNotifications[buyerIdx];
+    }, 30000);
 
     const rawVideoInput = document.getElementById('rawVideoInput');
     const rawPlayer = document.getElementById('rawPlayer');
+    const rawFileInfo = document.getElementById('rawFileInfo');
     const editedPlayer = document.getElementById('editedPlayer');
+    let currentRawObjectUrl = null;
 
     rawVideoInput.addEventListener('change', function () {
-        const file = this.files[0];
-        if (file) {
-            rawPlayer.src = URL.createObjectURL(file);
+        const file = this.files && this.files[0];
+        if (!file) return;
+        if (currentRawObjectUrl) {
+            URL.revokeObjectURL(currentRawObjectUrl);
         }
+        currentRawObjectUrl = URL.createObjectURL(file);
+        rawPlayer.src = currentRawObjectUrl;
+        rawPlayer.load();
+        const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+        rawFileInfo.textContent = "Selected Raw Video: " + file.name + " (" + sizeMb + " MB)";
+        document.getElementById('actionLog').textContent = "Raw video loaded in preview player: " + file.name;
     });
 
     async function executeSingleBrahmastra(toolId) {
@@ -582,10 +601,12 @@ Link: https://autovideopublisher.onrender.com/process_output/GOAT_Mastered_Sampl
                 document.getElementById('downloadVideoBtn').href = data.download_url;
                 document.getElementById('seoTitleBox').value = data.seo_title;
                 document.getElementById('seoCaptionBox').value = data.seo_description.replace('{LINK_PLACEHOLDER}', fullUrl);
-                if (rawVideoInput.files[0]) {
-                    editedPlayer.src = URL.createObjectURL(rawVideoInput.files[0]);
+                if (currentRawObjectUrl) {
+                    editedPlayer.src = currentRawObjectUrl;
+                    editedPlayer.load();
                 } else {
                     editedPlayer.src = data.video_url;
+                    editedPlayer.load();
                 }
             } else {
                 log.textContent = "Error: " + data.message;
