@@ -387,6 +387,10 @@ DASHBOARD_HTML = """
         .file-info-badge {
             margin-top: 6px; font-size: 12px; color: #38bdf8; font-weight: 600;
         }
+        .diag-line {
+            margin-top: 6px; font-size: 11px; color: #94a3b8; background: #020617;
+            padding: 6px 10px; border-radius: 6px; border: 1px dashed #334155;
+        }
 
         .brahmastra-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin: 14px 0; }
         .b-box {
@@ -467,6 +471,7 @@ DASHBOARD_HTML = """
                 <span class="file-info-badge" id="rawFileInfo">No video selected yet — choose your raw video to verify preview below.</span>
                 <a id="openRawTabLink" class="open-raw-link" href="#" target="_blank" rel="noopener">Open Raw Video in Browser Tab</a>
             </div>
+            <div class="diag-line" id="rawDiag">Preview Diagnostic: Waiting for file selection...</div>
             <div class="preview-stage">
                 <video id="rawPlayer" controls playsinline preload="metadata"></video>
                 <div class="raw-visual-card" id="rawVisualCard">
@@ -568,6 +573,7 @@ Link: https://autovideopublisher.onrender.com/process_output/GOAT_Mastered_Sampl
     const rawFallbackCanvas = document.getElementById('rawFallbackCanvas');
     const rawFallbackText = document.getElementById('rawFallbackText');
     const rawFileInfo = document.getElementById('rawFileInfo');
+    const rawDiag = document.getElementById('rawDiag');
     const openRawTabLink = document.getElementById('openRawTabLink');
 
     const editedPlayer = document.getElementById('editedPlayer');
@@ -577,9 +583,8 @@ Link: https://autovideopublisher.onrender.com/process_output/GOAT_Mastered_Sampl
 
     let currentRawObjectUrl = null;
     let currentRawDataUrl = null;
-    let currentRawFileName = "";
 
-    function renderVideoPreview(videoEl, visualCardEl, canvasEl, textEl, file, objectUrl, dataUrl) {
+    function renderVideoPreview(videoEl, visualCardEl, canvasEl, textEl, file, objectUrl, dataUrl, isRaw) {
         visualCardEl.style.display = 'none';
         canvasEl.style.display = 'none';
         videoEl.style.display = 'block';
@@ -605,6 +610,9 @@ Link: https://autovideopublisher.onrender.com/process_output/GOAT_Mastered_Sampl
         }
 
         videoEl.onloadedmetadata = function () {
+            if (isRaw) {
+                rawDiag.textContent = "Preview Diagnostic: Metadata loaded (" + videoEl.videoWidth + "x" + videoEl.videoHeight + ", readyState=" + videoEl.readyState + ")";
+            }
             try {
                 if (videoEl.duration && isFinite(videoEl.duration) && videoEl.duration > 0) {
                     videoEl.currentTime = Math.min(0.15, videoEl.duration * 0.05);
@@ -614,6 +622,9 @@ Link: https://autovideopublisher.onrender.com/process_output/GOAT_Mastered_Sampl
         };
 
         videoEl.onloadeddata = function () {
+            if (isRaw) {
+                rawDiag.textContent = "Preview Diagnostic: Frame ready (readyState=" + videoEl.readyState + ")";
+            }
             paintFrameToCanvas();
         };
 
@@ -621,8 +632,18 @@ Link: https://autovideopublisher.onrender.com/process_output/GOAT_Mastered_Sampl
             paintFrameToCanvas();
         };
 
+        videoEl.onerror = function () {
+            const errCode = videoEl.error ? videoEl.error.code : 'unknown';
+            if (isRaw) {
+                rawDiag.textContent = "Preview Diagnostic: Video player error code=" + errCode + " (mime=" + (file.type || 'none') + "). Fallback shown.";
+            }
+        };
+
         setTimeout(() => {
             if (!frameCaptured && (videoEl.readyState < 2 || videoEl.videoWidth === 0)) {
+                if (isRaw) {
+                    rawDiag.textContent = "Preview Diagnostic: File selected (" + file.name + ", mime=" + (file.type || 'none') + ", readyState=" + videoEl.readyState + ").";
+                }
                 visualCardEl.style.display = 'block';
                 canvasEl.style.display = 'none';
                 textEl.innerHTML =
@@ -634,9 +655,11 @@ Link: https://autovideopublisher.onrender.com/process_output/GOAT_Mastered_Sampl
 
     rawVideoInput.addEventListener('change', function () {
         const file = this.files && this.files[0];
-        if (!file) return;
+        if (!file) {
+            rawDiag.textContent = "Preview Diagnostic: No file in input.";
+            return;
+        }
 
-        currentRawFileName = file.name;
         if (currentRawObjectUrl) {
             URL.revokeObjectURL(currentRawObjectUrl);
         }
@@ -644,17 +667,18 @@ Link: https://autovideopublisher.onrender.com/process_output/GOAT_Mastered_Sampl
 
         const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
         rawFileInfo.textContent = "Selected Raw Video: " + file.name + " (" + sizeMb + " MB)";
+        rawDiag.textContent = "Preview Diagnostic: File '" + file.name + "' detected (" + sizeMb + " MB, type=" + (file.type || 'unknown') + "). Loading...";
         openRawTabLink.href = currentRawObjectUrl;
         openRawTabLink.style.display = 'inline';
 
         const reader = new FileReader();
         reader.onload = function (ev) {
             currentRawDataUrl = ev.target.result;
-            renderVideoPreview(rawPlayer, rawVisualCard, rawFallbackCanvas, rawFallbackText, file, currentRawObjectUrl, currentRawDataUrl);
+            renderVideoPreview(rawPlayer, rawVisualCard, rawFallbackCanvas, rawFallbackText, file, currentRawObjectUrl, currentRawDataUrl, true);
         };
         reader.readAsDataURL(file);
 
-        renderVideoPreview(rawPlayer, rawVisualCard, rawFallbackCanvas, rawFallbackText, file, currentRawObjectUrl, null);
+        renderVideoPreview(rawPlayer, rawVisualCard, rawFallbackCanvas, rawFallbackText, file, currentRawObjectUrl, null, true);
         document.getElementById('actionLog').textContent = "Raw video loaded: " + file.name + " (" + sizeMb + " MB).";
     });
 
@@ -718,7 +742,8 @@ Link: https://autovideopublisher.onrender.com/process_output/GOAT_Mastered_Sampl
                         editedFallbackText,
                         rawVideoInput.files[0],
                         currentRawObjectUrl,
-                        currentRawDataUrl
+                        currentRawDataUrl,
+                        false
                     );
                 } else {
                     editedVisualCard.style.display = 'none';
