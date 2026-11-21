@@ -371,12 +371,6 @@ DASHBOARD_HTML = """
         .preview-stage video {
             width: 100%; height: 240px; object-fit: contain; display: block; background: #020617;
         }
-        .raw-visual-card {
-            display: none; width: 100%; padding: 18px; text-align: center; background: #020617;
-        }
-        .raw-visual-card canvas {
-            max-width: 100%; max-height: 165px; border-radius: 8px; border: 1px solid #1e293b; display: none; margin: 0 auto 10px;
-        }
         .preview-actions-bar {
             display: flex; gap: 10px; align-items: center; justify-content: space-between;
             flex-wrap: wrap; margin-top: 8px; font-size: 12px;
@@ -386,10 +380,6 @@ DASHBOARD_HTML = """
         }
         .file-info-badge {
             margin-top: 6px; font-size: 12px; color: #38bdf8; font-weight: 600;
-        }
-        .diag-line {
-            margin-top: 6px; font-size: 11px; color: #94a3b8; background: #020617;
-            padding: 6px 10px; border-radius: 6px; border: 1px dashed #334155;
         }
 
         .brahmastra-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin: 14px 0; }
@@ -471,13 +461,8 @@ DASHBOARD_HTML = """
                 <span class="file-info-badge" id="rawFileInfo">No video selected yet — choose your raw video to verify preview below.</span>
                 <a id="openRawTabLink" class="open-raw-link" href="#" target="_blank" rel="noopener">Open Raw Video in Browser Tab</a>
             </div>
-            <div class="diag-line" id="rawDiag">Preview Diagnostic: Waiting for file selection...</div>
             <div class="preview-stage">
-                <video id="rawPlayer" controls playsinline preload="metadata"></video>
-                <div class="raw-visual-card" id="rawVisualCard">
-                    <canvas id="rawFallbackCanvas"></canvas>
-                    <div id="rawFallbackText" style="font-size:13px;color:#e2e8f0;"></div>
-                </div>
+                <video id="rawPlayer" controls playsinline preload="auto"></video>
             </div>
 
             <div class="brahmastra-grid">
@@ -512,11 +497,7 @@ DASHBOARD_HTML = """
         <section class="card">
             <h2>2. Edited Video Link, Download, SEO Copy & Social Publish</h2>
             <div class="preview-stage">
-                <video id="editedPlayer" controls playsinline preload="metadata"></video>
-                <div class="raw-visual-card" id="editedVisualCard">
-                    <canvas id="editedFallbackCanvas"></canvas>
-                    <div id="editedFallbackText" style="font-size:13px;color:#e2e8f0;"></div>
-                </div>
+                <video id="editedPlayer" controls playsinline preload="auto"></video>
             </div>
 
             <label class="field-lbl">Edited Video Direct Link (Copy & Paste Anywhere)</label>
@@ -569,117 +550,31 @@ Link: https://autovideopublisher.onrender.com/process_output/GOAT_Mastered_Sampl
 
     const rawVideoInput = document.getElementById('rawVideoInput');
     const rawPlayer = document.getElementById('rawPlayer');
-    const rawVisualCard = document.getElementById('rawVisualCard');
-    const rawFallbackCanvas = document.getElementById('rawFallbackCanvas');
-    const rawFallbackText = document.getElementById('rawFallbackText');
     const rawFileInfo = document.getElementById('rawFileInfo');
-    const rawDiag = document.getElementById('rawDiag');
     const openRawTabLink = document.getElementById('openRawTabLink');
-
     const editedPlayer = document.getElementById('editedPlayer');
-    const editedVisualCard = document.getElementById('editedVisualCard');
-    const editedFallbackCanvas = document.getElementById('editedFallbackCanvas');
-    const editedFallbackText = document.getElementById('editedFallbackText');
-
     let currentRawObjectUrl = null;
-    let currentRawDataUrl = null;
-
-    function renderVideoPreview(videoEl, visualCardEl, canvasEl, textEl, file, objectUrl, dataUrl, isRaw) {
-        visualCardEl.style.display = 'none';
-        canvasEl.style.display = 'none';
-        videoEl.style.display = 'block';
-
-        const chosenSrc = objectUrl || dataUrl || '';
-        videoEl.src = chosenSrc;
-        videoEl.load();
-
-        let frameCaptured = false;
-
-        function paintFrameToCanvas() {
-            try {
-                if (videoEl.videoWidth > 0 && videoEl.videoHeight > 0) {
-                    canvasEl.width = Math.min(videoEl.videoWidth, 640);
-                    canvasEl.height = Math.round((videoEl.videoHeight / videoEl.videoWidth) * canvasEl.width) || 200;
-                    const ctx = canvasEl.getContext('2d');
-                    ctx.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height);
-                    canvasEl.style.display = 'block';
-                    visualCardEl.style.display = 'block';
-                    frameCaptured = true;
-                }
-            } catch (e) {}
-        }
-
-        videoEl.onloadedmetadata = function () {
-            if (isRaw) {
-                rawDiag.textContent = "Preview Diagnostic: Metadata loaded (" + videoEl.videoWidth + "x" + videoEl.videoHeight + ", readyState=" + videoEl.readyState + ")";
-            }
-            try {
-                if (videoEl.duration && isFinite(videoEl.duration) && videoEl.duration > 0) {
-                    videoEl.currentTime = Math.min(0.15, videoEl.duration * 0.05);
-                }
-            } catch (e) {}
-            paintFrameToCanvas();
-        };
-
-        videoEl.onloadeddata = function () {
-            if (isRaw) {
-                rawDiag.textContent = "Preview Diagnostic: Frame ready (readyState=" + videoEl.readyState + ")";
-            }
-            paintFrameToCanvas();
-        };
-
-        videoEl.onseeked = function () {
-            paintFrameToCanvas();
-        };
-
-        videoEl.onerror = function () {
-            const errCode = videoEl.error ? videoEl.error.code : 'unknown';
-            if (isRaw) {
-                rawDiag.textContent = "Preview Diagnostic: Video player error code=" + errCode + " (mime=" + (file.type || 'none') + "). Fallback shown.";
-            }
-        };
-
-        setTimeout(() => {
-            if (!frameCaptured && (videoEl.readyState < 2 || videoEl.videoWidth === 0)) {
-                if (isRaw) {
-                    rawDiag.textContent = "Preview Diagnostic: File selected (" + file.name + ", mime=" + (file.type || 'none') + ", readyState=" + videoEl.readyState + ").";
-                }
-                visualCardEl.style.display = 'block';
-                canvasEl.style.display = 'none';
-                textEl.innerHTML =
-                    "<strong>Selected File:</strong> " + file.name +
-                    "<br><span style='color:#38bdf8;'>Preview ready (" + (file.size / (1024 * 1024)).toFixed(2) + " MB). Click 'Open Raw Video in Browser Tab' above if your browser codec restricts inline playback.</span>";
-            }
-        }, 1200);
-    }
 
     rawVideoInput.addEventListener('change', function () {
         const file = this.files && this.files[0];
-        if (!file) {
-            rawDiag.textContent = "Preview Diagnostic: No file in input.";
-            return;
-        }
+        if (!file) return;
 
         if (currentRawObjectUrl) {
             URL.revokeObjectURL(currentRawObjectUrl);
         }
         currentRawObjectUrl = URL.createObjectURL(file);
 
+        rawPlayer.style.display = 'block';
+        rawPlayer.src = currentRawObjectUrl;
+        rawPlayer.load();
+
         const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
         rawFileInfo.textContent = "Selected Raw Video: " + file.name + " (" + sizeMb + " MB)";
-        rawDiag.textContent = "Preview Diagnostic: File '" + file.name + "' detected (" + sizeMb + " MB, type=" + (file.type || 'unknown') + "). Loading...";
-        openRawTabLink.href = currentRawObjectUrl;
-        openRawTabLink.style.display = 'inline';
-
-        const reader = new FileReader();
-        reader.onload = function (ev) {
-            currentRawDataUrl = ev.target.result;
-            renderVideoPreview(rawPlayer, rawVisualCard, rawFallbackCanvas, rawFallbackText, file, currentRawObjectUrl, currentRawDataUrl, true);
-        };
-        reader.readAsDataURL(file);
-
-        renderVideoPreview(rawPlayer, rawVisualCard, rawFallbackCanvas, rawFallbackText, file, currentRawObjectUrl, null, true);
-        document.getElementById('actionLog').textContent = "Raw video loaded: " + file.name + " (" + sizeMb + " MB).";
+        if (openRawTabLink) {
+            openRawTabLink.href = currentRawObjectUrl;
+            openRawTabLink.style.display = 'inline';
+        }
+        document.getElementById('actionLog').textContent = "Raw video loaded in preview player: " + file.name;
     });
 
     async function executeSingleBrahmastra(toolId) {
@@ -733,21 +628,10 @@ Link: https://autovideopublisher.onrender.com/process_output/GOAT_Mastered_Sampl
                 document.getElementById('downloadVideoBtn').href = data.download_url;
                 document.getElementById('seoTitleBox').value = data.seo_title;
                 document.getElementById('seoCaptionBox').value = data.seo_description.replace('{LINK_PLACEHOLDER}', fullUrl);
-
-                if (rawVideoInput.files[0] && (currentRawObjectUrl || currentRawDataUrl)) {
-                    renderVideoPreview(
-                        editedPlayer,
-                        editedVisualCard,
-                        editedFallbackCanvas,
-                        editedFallbackText,
-                        rawVideoInput.files[0],
-                        currentRawObjectUrl,
-                        currentRawDataUrl,
-                        false
-                    );
+                if (currentRawObjectUrl) {
+                    editedPlayer.src = currentRawObjectUrl;
+                    editedPlayer.load();
                 } else {
-                    editedVisualCard.style.display = 'none';
-                    editedPlayer.style.display = 'block';
                     editedPlayer.src = data.video_url;
                     editedPlayer.load();
                 }
