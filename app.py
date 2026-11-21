@@ -148,7 +148,7 @@ def login():
         <div class="box">
             <div class="metrics">
                 <div class="metric"><strong>12,000+</strong><span>Downloads</span></div>
-                <div class="metric"><strong>4★</strong><span>Creator Rating</span></div>
+                <div class="metric"><strong>4&#9733;</strong><span>Creator Rating</span></div>
             </div>
             <h1>Creator Secure Login</h1>
             <p class="sub">Encrypted password vault for GOAT- Automated video editing and publishing platemorms</p>
@@ -166,7 +166,7 @@ def login():
             </form>
             <div class="sec-note">Protected with Werkzeug salted password hashing & session security.</div>
             <div class="foot">
-                <a href="/">← Back to Landing Page</a>
+                <a href="/">Back to Landing Page</a>
             </div>
         </div>
     </body>
@@ -215,7 +215,7 @@ def run_brahmastra():
         'trend': {
             'title': '2. Trend-Jacking Hook',
             'status': 'Hook Ready',
-            'detail': '3-second high-retention hook: "Rukiye! Yeh 2026 tarika dekh kar aapka video rukega nahi."'
+            'detail': '3-second high-retention hook: Rukiye! Yeh 2026 tarika dekh kar aapka video rukega nahi.'
         },
         'clone': {
             'title': '3. Multi-Language Clone',
@@ -272,8 +272,8 @@ def process_video():
         active_tools = ", ".join(selected) if selected else "All 5 Brahmastras"
         seo_title = "Viral Master Cut 2026 | GOAT- Automated video editing and publishing platemorms"
         seo_description = (
-            f"Edited with {active_tools} on GOAT- Automated video editing and publishing platemorms.\n"
-            "Direct Edited Video Link: {LINK_PLACEHOLDER}\n"
+            f"Edited with {active_tools} on GOAT- Automated video editing and publishing platemorms. "
+            "Direct Edited Video Link: {LINK_PLACEHOLDER} "
             "Tags: #GOATStudio #CreatorSaaS #ViralVideo #YouTube #Facebook #Instagram #TwitterX"
         )
 
@@ -298,7 +298,7 @@ def simulate_referral_share():
     session['referral_earnings'] = round(session.get('referral_earnings', 0.0) + commission_earned, 2)
     return jsonify({
         'status': 'success',
-        'message': f'Referral link copied! 25% commission (+₹{commission_earned}) credited on ₹{int(sale_amount)} plan.',
+        'message': f'Referral link copied! 25% commission (+Rs.{commission_earned}) credited on Rs.{int(sale_amount)} plan.',
         'commission_rate_percent': int(REFERRAL_COMMISSION_RATE * 100),
         'commission_earned': commission_earned,
         'total_referrals': session['total_referrals'],
@@ -435,8 +435,8 @@ DASHBOARD_HTML = """
         <div class="top-stats">
             <span class="stat-chip">100,000+ Views</span>
             <span class="stat-chip live">100+ Messages</span>
-            <span class="stat-chip">12,000+ Downloads • 4★</span>
-            <span class="stat-chip">25% Ref: <span id="refCount">{{ total_referrals }}</span> | ₹<span id="refEarn">{{ referral_earnings }}</span></span>
+            <span class="stat-chip">12,000+ Downloads &#8226; 4&#9733;</span>
+            <span class="stat-chip">25% Ref: <span id="refCount">{{ total_referrals }}</span> | &#8377;<span id="refEarn">{{ referral_earnings }}</span></span>
         </div>
         <div class="nav-group">
             <a href="/" class="nav-btn">Landing</a>
@@ -447,7 +447,7 @@ DASHBOARD_HTML = """
 
 <div class="live-ticker">
     <div class="ticker-inner">
-        <div class="notif-pill" id="liveNotifBox">🔔 Rajesh, Dehradun ne abhi khareeda: Annual Creator Pass (₹999)</div>
+        <div class="notif-pill" id="liveNotifBox">Rajesh, Dehradun ne abhi khareeda: Annual Creator Pass (Rs.999)</div>
         <div class="user-badge">Signed in: <strong>{{ user_name }}</strong> ({{ user_email }})</div>
     </div>
 </div>
@@ -458,7 +458,7 @@ DASHBOARD_HTML = """
             <h2>1. Raw Video Preview & 5 Brahmastra Execution</h2>
             <input type="file" id="rawVideoInput" accept="video/*,.mp4,.webm,.ogg,.mov,.m4v,.mkv,.avi">
             <div class="preview-actions-bar">
-                <span class="file-info-badge" id="rawFileInfo">No video selected yet — choose your raw video to verify preview below.</span>
+                <span class="file-info-badge" id="rawFileInfo">No video selected yet - choose your raw video to verify preview below.</span>
                 <a id="openRawTabLink" class="open-raw-link" href="#" target="_blank" rel="noopener">Open Raw Video in Browser Tab</a>
             </div>
             <div class="preview-stage">
@@ -471,234 +471,4 @@ DASHBOARD_HTML = """
                     <button type="button" class="btn-mini" onclick="executeSingleBrahmastra('shield')">Execute Shield</button>
                 </div>
                 <div class="b-box">
-                    <div class="b-top"><input type="checkbox" name="b_tool" value="Trend-Jacking Hook" checked> 2. Trend-Jacking Hook</div>
-                    <button type="button" class="btn-mini" onclick="executeSingleBrahmastra('trend')">Execute Hook</button>
-                </div>
-                <div class="b-box">
-                    <div class="b-top"><input type="checkbox" name="b_tool" value="Multi-Language Clone" checked> 3. Multi-Language Clone</div>
-                    <button type="button" class="btn-mini" onclick="executeSingleBrahmastra('clone')">Execute Clone</button>
-                </div>
-                <div class="b-box">
-                    <div class="b-top"><input type="checkbox" name="b_tool" value="Smart Affiliate Injector" checked> 4. Affiliate Injector</div>
-                    <button type="button" class="btn-mini" onclick="executeSingleBrahmastra('affiliate')">Execute Injector</button>
-                </div>
-                <div class="b-box">
-                    <div class="b-top"><input type="checkbox" name="b_tool" value="Voice of Emotion" checked> 5. Voice of Emotion</div>
-                    <button type="button" class="btn-mini" onclick="executeSingleBrahmastra('emotion')">Execute Emotion</button>
-                </div>
-            </div>
-
-            <button type="button" class="btn btn-primary" onclick="processFullVideo()">Run Full Video Edit + Generate Edited Link & SEO</button>
-            <button type="button" class="btn btn-all" onclick="executeAllFive()">Execute All 5 Brahmastras Together</button>
-
-            <div class="console-box" id="actionLog">Status: Ready. Select raw video to verify preview, then run any Brahmastra.</div>
-        </section>
-
-        <section class="card">
-            <h2>2. Edited Video Link, Download, SEO Copy & Social Publish</h2>
-            <div class="preview-stage">
-                <video id="editedPlayer" controls playsinline preload="auto"></video>
-            </div>
-
-            <label class="field-lbl">Edited Video Direct Link (Copy & Paste Anywhere)</label>
-            <div class="link-row">
-                <input type="text" id="editedLinkInput" value="https://autovideopublisher.onrender.com/process_output/GOAT_Mastered_Sample.mp4" readonly>
-                <button type="button" class="btn btn-copy" onclick="copyEditedLink()">Copy Link</button>
-                <a id="downloadVideoBtn" href="/process_output/GOAT_Mastered_Sample.mp4?download=1" class="btn btn-dl">Download Video</a>
-            </div>
-
-            <label class="field-lbl">SEO Title</label>
-            <input type="text" id="seoTitleBox" value="Viral Master Cut 2026 | GOAT- Automated video editing and publishing platemorms">
-
-            <label class="field-lbl">SEO Caption, Tags & Video Link (Copy for Social Paste)</label>
-            <textarea id="seoCaptionBox">Edited with GOAT- Automated video editing and publishing platemorms.
-Link: https://autovideopublisher.onrender.com/process_output/GOAT_Mastered_Sample.mp4
-#GOATStudio #CreatorSaaS #ViralVideo #YouTube #Facebook #Instagram #TwitterX</textarea>
-
-            <button type="button" class="btn btn-copy" style="margin-top:8px;" onclick="copyAllForSocial()">Copy Full SEO + Edited Video Link</button>
-
-            <div class="social-bar">
-                <button type="button" class="btn s-yt" onclick="publishToPlatform('youtube')">YouTube</button>
-                <button type="button" class="btn s-fb" onclick="publishToPlatform('facebook')">Facebook</button>
-                <button type="button" class="btn s-ig" onclick="publishToPlatform('instagram')">Instagram</button>
-                <button type="button" class="btn s-tw" onclick="publishToPlatform('twitter')">Twitter / X</button>
-                <button type="button" class="btn s-ref" onclick="addReferral()">25% Referral Link</button>
-            </div>
-        </section>
-    </div>
-</main>
-
-<script>
-    const buyerNotifications = [
-        "🔔 Rajesh, Dehradun ne abhi khareeda: Annual Creator Pass (₹999)",
-        "🔔 Pooja Sharma, Jaipur ne abhi khareeda: 6-Month Pro Vault (₹499)",
-        "🔔 Amit Verma, Lucknow ne abhi khareeda: Monthly Starter Plan (₹199)",
-        "🔔 Sneha Joshi, Haldwani ne abhi khareeda: Annual Creator Pass (₹999)",
-        "🔔 Vikram Rathore, Indore ne abhi khareeda: 6-Month Pro Vault (₹499)",
-        "🔔 Neha Kulkarni, Pune ne abhi khareeda: Annual Creator Pass (₹999)",
-        "🔔 Saurabh Tiwari, Varanasi ne abhi khareeda: 6-Month Pro Vault (₹499)",
-        "🔔 Ankit Negi, Almora ne abhi khareeda: Annual Creator Pass (₹999)",
-        "🔔 Kavita Nair, Kochi ne abhi khareeda: Monthly Starter Plan (₹199)",
-        "🔔 Rohit Bansal, Chandigarh ne abhi khareeda: Annual Creator Pass (₹999)"
-    ];
-    let buyerIdx = 0;
-    setInterval(() => {
-        buyerIdx = (buyerIdx + 1) % buyerNotifications.length;
-        const el = document.getElementById('liveNotifBox');
-        if (el) el.textContent = buyerNotifications[buyerIdx];
-    }, 30000);
-
-    const rawVideoInput = document.getElementById('rawVideoInput');
-    const rawPlayer = document.getElementById('rawPlayer');
-    const rawFileInfo = document.getElementById('rawFileInfo');
-    const openRawTabLink = document.getElementById('openRawTabLink');
-    const editedPlayer = document.getElementById('editedPlayer');
-    let currentRawObjectUrl = null;
-
-    rawVideoInput.addEventListener('change', function () {
-        const file = this.files && this.files[0];
-        if (!file) return;
-
-        if (currentRawObjectUrl) {
-            URL.revokeObjectURL(currentRawObjectUrl);
-        }
-        currentRawObjectUrl = URL.createObjectURL(file);
-
-        rawPlayer.style.display = 'block';
-        rawPlayer.src = currentRawObjectUrl;
-        rawPlayer.load();
-
-        const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
-        rawFileInfo.textContent = "Selected Raw Video: " + file.name + " (" + sizeMb + " MB)";
-        if (openRawTabLink) {
-            openRawTabLink.href = currentRawObjectUrl;
-            openRawTabLink.style.display = 'inline';
-        }
-        document.getElementById('actionLog').textContent = "Raw video loaded in preview player: " + file.name;
-    });
-
-    async function executeSingleBrahmastra(toolId) {
-        const log = document.getElementById('actionLog');
-        log.textContent = "Executing " + toolId + "...";
-        try {
-            const res = await fetch('/run_brahmastra', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tool_id: toolId })
-            });
-            const data = await res.json();
-            log.textContent = data.title + " [" + data.status + "]: " + data.detail;
-        } catch (e) {
-            log.textContent = "Execution error: " + e.message;
-        }
-    }
-
-    async function executeAllFive() {
-        const log = document.getElementById('actionLog');
-        log.textContent = "Executing all 5 Brahmastras...";
-        try {
-            const res = await fetch('/run_brahmastra', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tool_id: 'all' })
-            });
-            const data = await res.json();
-            log.textContent = data.title + " (" + data.status_label + "): " + data.detail;
-        } catch (e) {
-            log.textContent = "Error executing all 5: " + e.message;
-        }
-    }
-
-    async function processFullVideo() {
-        const log = document.getElementById('actionLog');
-        log.textContent = "Processing edited video, link, SEO & download package...";
-        const fd = new FormData();
-        if (rawVideoInput.files[0]) {
-            fd.append('video_file', rawVideoInput.files[0]);
-        }
-        document.querySelectorAll('input[name="b_tool"]:checked').forEach(cb => fd.append('brahmastras', cb.value));
-
-        try {
-            const res = await fetch('/process_video', { method: 'POST', body: fd });
-            const data = await res.json();
-            if (data.status === 'success') {
-                log.textContent = data.message;
-                const fullUrl = window.location.origin + data.video_url;
-                document.getElementById('editedLinkInput').value = fullUrl;
-                document.getElementById('downloadVideoBtn').href = data.download_url;
-                document.getElementById('seoTitleBox').value = data.seo_title;
-                document.getElementById('seoCaptionBox').value = data.seo_description.replace('{LINK_PLACEHOLDER}', fullUrl);
-                if (currentRawObjectUrl) {
-                    editedPlayer.src = currentRawObjectUrl;
-                    editedPlayer.load();
-                } else {
-                    editedPlayer.src = data.video_url;
-                    editedPlayer.load();
-                }
-            } else {
-                log.textContent = "Error: " + data.message;
-            }
-        } catch (e) {
-            log.textContent = "Processing failed: " + e.message;
-        }
-    }
-
-    function copyEditedLink() {
-        const linkVal = document.getElementById('editedLinkInput').value;
-        navigator.clipboard.writeText(linkVal).then(() => {
-            document.getElementById('actionLog').textContent = "Copied Edited Video Link: " + linkVal;
-        });
-    }
-
-    function copyAllForSocial() {
-        const title = document.getElementById('seoTitleBox').value;
-        const caption = document.getElementById('seoCaptionBox').value;
-        const combined = title + "\n\n" + caption;
-        navigator.clipboard.writeText(combined).then(() => {
-            document.getElementById('actionLog').textContent = "Copied Title + SEO + Edited Video Link! Now paste directly on YouTube, Facebook, Instagram, or Twitter/X.";
-        });
-    }
-
-    function publishToPlatform(platform) {
-        const linkVal = document.getElementById('editedLinkInput').value;
-        const captionVal = document.getElementById('seoCaptionBox').value;
-        navigator.clipboard.writeText(captionVal).catch(() => {});
-
-        let targetUrl = "https://studio.youtube.com";
-        if (platform === 'facebook') {
-            targetUrl = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(linkVal);
-        } else if (platform === 'instagram') {
-            targetUrl = "https://www.instagram.com/";
-        } else if (platform === 'twitter') {
-            targetUrl = "https://x.com/intent/tweet?text=" + encodeURIComponent(captionVal);
-        }
-
-        document.getElementById('actionLog').textContent =
-            "Copied link & SEO for " + platform.toUpperCase() + ". Opening platform so you can paste & publish immediately.";
-        window.open(targetUrl, '_blank', 'noopener');
-    }
-
-    async function addReferral() {
-        const res = await fetch('/simulate_referral_share', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sale_amount: 199 })
-        });
-        const data = await res.json();
-        if (data.status === 'success') {
-            document.getElementById('refCount').textContent = data.total_referrals;
-            document.getElementById('refEarn').textContent = data.referral_earnings;
-            const refLink = window.location.origin + "/login?ref=goat25";
-            navigator.clipboard.writeText(refLink).catch(() => {});
-            document.getElementById('actionLog').textContent = data.message + " Link: " + refLink;
-        }
-    }
-</script>
-
-</body>
-</html>
-"""
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+                    <div class="b-top"><input type="checkbox" name="
