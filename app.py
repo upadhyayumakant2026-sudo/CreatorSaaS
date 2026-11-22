@@ -1,6 +1,9 @@
 import os
+import re
 import json
 import shutil
+import smtplib
+from email.message import EmailMessage
 from datetime import datetime
 from flask import (
     Flask, render_template_string, request, jsonify,
@@ -14,8 +17,33 @@ STATIC_DIR = os.path.join(BASE_DIR, 'statics')
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
 OUTPUT_FOLDER = os.path.join(BASE_DIR, 'process_output')
 USERS_FILE = os.path.join(BASE_DIR, 'users_security_store.json')
+BONUS_LOGS_FILE = os.path.join(BASE_DIR, 'bonus_email_logs.json')
 
 REFERRAL_COMMISSION_RATE = 0.25
+
+TEST_PLANS = {
+    'monthly_10': {
+        'id': 'monthly_10',
+        'name': 'Monthly Test Plan (Rs.10)',
+        'plan_key': 'monthly',
+        'price_inr': 10,
+        'max_minutes': 5
+    },
+    'six_month_20': {
+        'id': 'six_month_20',
+        'name': '6-Month Test Plan (Rs.20)',
+        'plan_key': 'six_month',
+        'price_inr': 20,
+        'max_minutes': 60
+    },
+    'yearly_30': {
+        'id': 'yearly_30',
+        'name': '1-Year Test Plan (Rs.30)',
+        'plan_key': 'yearly',
+        'price_inr': 30,
+        'max_minutes': 180
+    }
+}
 
 app = Flask(
     __name__,
@@ -28,19 +56,27 @@ for folder in (TEMPLATE_DIR, STATIC_DIR, UPLOAD_FOLDER, OUTPUT_FOLDER):
     os.makedirs(folder, exist_ok=True)
 
 
-def load_users():
-    if os.path.isfile(USERS_FILE):
+def load_json_file(path, default):
+    if os.path.isfile(path):
         try:
-            with open(USERS_FILE, 'r', encoding='utf-8') as f:
+            with open(path, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except Exception:
-            return {}
-    return {}
+            return default
+    return default
+
+
+def save_json_file(path, data):
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+
+def load_users():
+    return load_json_file(USERS_FILE, {})
 
 
 def save_users(users_data):
-    with open(USERS_FILE, 'w', encoding='utf-8') as f:
-        json.dump(users_data, f, indent=2, ensure_ascii=False)
+    save_json_file(USERS_FILE, users_data)
 
 
 def load_html_file(filename, **context):
@@ -52,6 +88,107 @@ def load_html_file(filename, **context):
             with open(candidate, 'r', encoding='utf-8') as f:
                 return render_template_string(f.read(), **context)
     return None
+
+
+def get_plan_max_minutes(plan_key):
+    mapping = {
+        'monthly': 5,
+        'six_month': 60,
+        'yearly': 180
+    }
+    return mapping.get(plan_key, 5)
+
+
+def build_bonus_payload(plan_info):
+    return {
+        'bonus_title': 'GOAT Creator Bonus Vault',
+        'plan_name': plan_info['name'],
+        'max_minutes_allowed': plan_info['max_minutes'],
+        'bonus_items': [
+            '30+ Viral Short-Form Video Hooks Pack',
+            '20+ Emotional Shayari & Retro Reels Scripts',
+            'Suno AI & Video Editing Prompt Cheat-Sheet',
+            '25% Partner Referral Fast-Start Guide'
+        ]
+    }
+
+
+def dispatch_bonus_email(recipient_email, recipient_name, plan_info):
+    bonus = build_bonus_payload(plan_info)
+    smtp_host = os.environ.get("SMTP_HOST", "").strip()
+    smtp_port = int(os.environ.get("SMTP_PORT", "587"))
+    smtp_user = os.environ.get("SMTP_USER", "").strip()
+    smtp_pass = os.environ.get("SMTP_PASS", "").strip()
+    smtp_from = os.environ.get("SMTP_FROM", smtp_user or "noreply@goatstudio.local").strip()
+
+    body_lines = [
+        f"Namaste {recipient_name},",
+        "",
+        f"Aapka {plan_info['name']} (Rs.{plan_info['price_inr']}) activate ho gaya hai.",
+        f"Video Duration Limit: Less than {plan_info['max_minutes']} minutes per video.",
+        "",
+        "Aapka Bonus Pack:",
+    ] + [f"- {item}" for item in bonus['bonus_items']] + [
+        "",
+        "Dashboard: https://autovideopublisher.onrender.com/dashboard",
+        "Team GOAT- Automated video editing and publishing platemorms"
+    ]
+    email_body = "\n".join(body_lines)
+
+    delivery_mode = "logged_ready_for_smtp"
+    delivery_detail = "Bonus recorded and unlocked on account. Set SMTP_HOST/SMTP_USER/SMTP_PASS in env for live inbox delivery."
+
+    if smtp_host and smtp_user and smtp_pass:
+        try:
+            msg = EmailMessage()
+            msg['Subject'] = f"Bonus Unlocked - {plan_info['name']} | GOAT Studio"
+            msg['From'] = smtp_from
+            msg['To'] = recipient_email
+            msg.set_content(email_body)
+
+            with smtplib.SMTP(smtp_host, smtp_port, timeout=15) as server:
+                server.starttls()
+                server.login(smtp_user, smtp_pass)
+                server.send_message(msg)
+
+            delivery_mode = "sent_via_smtp"
+            delivery_detail = f"Bonus email sent to {recipient_email}."
+        except Exception as exc:
+            delivery_mode = "smtp_error_logged"
+            delivery_detail = f"SMTP attempt note: {exc}"
+
+    logs = load_json_file(BONUS_LOGS_FILE, [])
+    entry = {
+        'timestamp_utc': datetime.utcnow().isoformat(),
+        'email': recipient_email,
+        'name': recipient_name,
+        'plan_id': plan_info['id'],
+        'plan_name': plan_info['name'],
+        'price_inr': plan_info['price_inr'],
+        'max_minutes': plan_info['max_minutes'],
+        'delivery_mode': delivery_mode,
+        'delivery_detail': delivery_detail,
+        'bonus': bonus
+    }
+    logs.append(entry)
+    save_json_file(BONUS_LOGS_FILE, logs)
+    return entry
+
+
+def generate_unique_seo(raw_filename, plan_key, max_minutes, active_tools):
+    base_stem = os.path.splitext(raw_filename)[0] if raw_filename else "GOAT_Master_Clip"
+    cleaned_words = [w for w in re.split(r'[_\-\s.]+', base_stem) if w]
+    topic_label = " ".join(cleaned_words[:6]).title() if cleaned_words else "Creator Master Cut"
+    tool_tag_slug = "".join(ch for ch in topic_label.title() if ch.isalnum())[:24] or "CreatorCut"
+    plan_label = plan_key.replace("_", "-").title()
+
+    seo_title = f"{topic_label} ({plan_label} less than {max_minutes}m) | GOAT- Automated video editing and publishing platemorms"
+    seo_description = (
+        f"Video Topic: {topic_label} | Plan: {plan_label} (Max less than {max_minutes} min) | "
+        f"Tools: {active_tools}. Link: {{LINK_PLACEHOLDER}} "
+        f"#GOATStudio #{tool_tag_slug} #ViralVideo #YouTube #Facebook #Instagram #TwitterX"
+    )
+    return seo_title, seo_description
 
 
 LOGIN_HTML = "\n".join([
@@ -125,6 +262,12 @@ DASHBOARD_HTML = "\n".join([
     "        .ticker-inner { max-width: 1260px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }",
     "        .notif-pill { background: #172554; border-left: 4px solid #fbbf24; color: #fef08a; padding: 6px 12px; border-radius: 6px; font-size: 13px; }",
     "        .container { max-width: 1260px; margin: 0 auto; padding: 20px; }",
+    "        .plan-strip { background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }",
+    "        .plan-btns { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }",
+    "        .plan-btn { border: none; border-radius: 8px; padding: 9px 13px; font-size: 12px; font-weight: bold; color: #fff; cursor: pointer; }",
+    "        .p-10 { background: #059669; }",
+    "        .p-20 { background: #2563eb; }",
+    "        .p-30 { background: #7c3aed; }",
     "        .grid-main { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 18px; }",
     "        .card { background: #0f172a; border: 1px solid #1e293b; border-radius: 12px; padding: 18px; }",
     "        .card h2 { margin: 0 0 10px; font-size: 17px; color: #7dd3fc; }",
@@ -143,7 +286,7 @@ DASHBOARD_HTML = "\n".join([
     "        .btn-dl { background: #059669; color: #fff; }",
     "        .console-box { margin-top: 10px; padding: 10px; background: #020617; border: 1px solid #334155; border-radius: 8px; font-size: 12px; color: #a7f3d0; }",
     "        label.field-lbl { display: block; font-size: 12px; font-weight: bold; color: #cbd5e1; margin: 10px 0 4px; }",
-    "        input[type=\"file\"], input[type=\"text\"], textarea { width: 100%; padding: 9px 11px; border-radius: 8px; border: 1px solid #334155; background: #060b19; color: #fff; font-size: 13px; }",
+    "        input[type=\"file\"], input[type=\"text\"], input[type=\"email\"], textarea { width: 100%; padding: 9px 11px; border-radius: 8px; border: 1px solid #334155; background: #060b19; color: #fff; font-size: 13px; }",
     "        textarea { min-height: 80px; }",
     "        .link-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }",
     "        .link-row input { flex: 1; min-width: 180px; }",
@@ -174,10 +317,21 @@ DASHBOARD_HTML = "\n".join([
     "<div class=\"live-ticker\">",
     "    <div class=\"ticker-inner\">",
     "        <div class=\"notif-pill\" id=\"liveNotifBox\">Rajesh, Dehradun ne abhi khareeda: Annual Creator Pass (Rs.999)</div>",
-    "        <div style=\"font-size:12px;color:#94a3b8;\">Signed in: <strong>{{ user_name }}</strong> ({{ user_email }})</div>",
+    "        <div style=\"font-size:12px;color:#94a3b8;\">Signed in: <strong>{{ user_name }}</strong> ({{ user_email }}) | Active Plan: <strong id=\"activePlanLabel\">{{ active_plan_name }}</strong> (Max: <strong id=\"activePlanLimit\">{{ max_minutes }}</strong> min)</div>",
     "    </div>",
     "</div>",
     "<main class=\"container\">",
+    "    <div class=\"plan-strip\">",
+    "        <div style=\"flex:1;min-width:240px;\">",
+    "            <strong style=\"color:#7dd3fc;\">Test Plan & Email Bonus Check:</strong>",
+    "            <input type=\"email\" id=\"buyerTestEmail\" value=\"{{ user_email }}\" placeholder=\"Buyer email for plan & bonus\" style=\"margin-top:6px;\">",
+    "        </div>",
+    "        <div class=\"plan-btns\">",
+    "            <button type=\"button\" class=\"plan-btn p-10\" onclick=\"buyTestPlan('monthly_10')\">Buy Monthly Rs.10 (less than 5 min)</button>",
+    "            <button type=\"button\" class=\"plan-btn p-20\" onclick=\"buyTestPlan('six_month_20')\">Buy 6-Month Rs.20 (less than 60 min)</button>",
+    "            <button type=\"button\" class=\"plan-btn p-30\" onclick=\"buyTestPlan('yearly_30')\">Buy 1-Year Rs.30 (less than 180 min)</button>",
+    "        </div>",
+    "    </div>",
     "    <div class=\"grid-main\">",
     "        <section class=\"card\">",
     "            <h2>1. Raw Video Preview & 5 Brahmastra Execution</h2>",
@@ -251,10 +405,23 @@ DASHBOARD_HTML = "\n".join([
     "var openRawTabLink = document.getElementById(\"openRawTabLink\");",
     "var editedPlayer = document.getElementById(\"editedPlayer\");",
     "var currentRawObjectUrl = null;",
+    "var currentRawDurationSec = 0;",
+    "if (rawPlayer) {",
+    "    rawPlayer.addEventListener(\"loadedmetadata\", function () {",
+    "        currentRawDurationSec = Number(rawPlayer.duration || 0);",
+    "        var mins = (currentRawDurationSec / 60).toFixed(2);",
+    "        if (rawVideoInput && rawVideoInput.files && rawVideoInput.files[0]) {",
+    "            var f = rawVideoInput.files[0];",
+    "            var sizeMb = (f.size / (1024 * 1024)).toFixed(2);",
+    "            rawFileInfo.textContent = \"Selected Raw Video: \" + f.name + \" (\" + sizeMb + \" MB, \" + mins + \" min)\";",
+    "        }",
+    "    });",
+    "}",
     "if (rawVideoInput) {",
     "    rawVideoInput.addEventListener(\"change\", function () {",
     "        var file = this.files && this.files[0];",
     "        if (!file) return;",
+    "        currentRawDurationSec = 0;",
     "        if (currentRawObjectUrl) { URL.revokeObjectURL(currentRawObjectUrl); }",
     "        currentRawObjectUrl = URL.createObjectURL(file);",
     "        rawPlayer.style.display = \"block\";",
@@ -265,6 +432,27 @@ DASHBOARD_HTML = "\n".join([
     "        if (openRawTabLink) { openRawTabLink.href = currentRawObjectUrl; openRawTabLink.style.display = \"inline\"; }",
     "        document.getElementById(\"actionLog\").textContent = \"Raw video loaded in preview player: \" + file.name;",
     "    });",
+    "}",
+    "async function buyTestPlan(planId) {",
+    "    var log = document.getElementById(\"actionLog\");",
+    "    var emailBox = document.getElementById(\"buyerTestEmail\");",
+    "    var buyerEmail = emailBox ? emailBox.value.trim() : \"\";",
+    "    log.textContent = \"Activating test plan & bonus email...\";",
+    "    try {",
+    "        var res = await fetch(\"/purchase_plan\", {",
+    "            method: \"POST\",",
+    "            headers: { \"Content-Type\": \"application/json\" },",
+    "            body: JSON.stringify({ plan_id: planId, email: buyerEmail })",
+    "        });",
+    "        var data = await res.json();",
+    "        if (data.status === \"success\") {",
+    "            document.getElementById(\"activePlanLabel\").textContent = data.plan_name;",
+    "            document.getElementById(\"activePlanLimit\").textContent = data.max_minutes;",
+    "            log.textContent = data.message + \" | Bonus Status: \" + data.bonus_delivery_detail;",
+    "        } else {",
+    "            log.textContent = \"Plan error: \" + data.message;",
+    "        }",
+    "    } catch (e) { log.textContent = \"Plan error: \" + e.message; }",
     "}",
     "async function executeSingleBrahmastra(toolId) {",
     "    var log = document.getElementById(\"actionLog\");",
@@ -289,6 +477,7 @@ DASHBOARD_HTML = "\n".join([
     "    log.textContent = \"Processing edited video, link, SEO & download package...\";",
     "    var fd = new FormData();",
     "    if (rawVideoInput && rawVideoInput.files && rawVideoInput.files[0]) { fd.append(\"video_file\", rawVideoInput.files[0]); }",
+    "    fd.append(\"video_duration_sec\", String(currentRawDurationSec || 0));",
     "    var checkedBoxes = document.querySelectorAll(\"input[name='b_tool']:checked\");",
     "    for (var i = 0; i < checkedBoxes.length; i++) { fd.append(\"brahmastras\", checkedBoxes[i].value); }",
     "    try {",
@@ -368,6 +557,8 @@ def login():
                     session['logged_in'] = True
                     session['user_name'] = users[email].get('name') or name or email.split('@')[0].title()
                     session['user_email'] = email
+                    session['active_plan_key'] = users[email].get('active_plan_key', 'monthly')
+                    session['active_plan_name'] = users[email].get('active_plan_name', 'Monthly Test Plan (Rs.10)')
                     users[email]['last_login'] = datetime.utcnow().isoformat()
                     save_users(users)
                     return redirect(url_for('dashboard'))
@@ -379,6 +570,8 @@ def login():
                     'name': display_name,
                     'email': email,
                     'password_hash': generate_password_hash(password),
+                    'active_plan_key': 'monthly',
+                    'active_plan_name': 'Monthly Test Plan (Rs.10)',
                     'created_at': datetime.utcnow().isoformat(),
                     'last_login': datetime.utcnow().isoformat()
                 }
@@ -386,6 +579,8 @@ def login():
                 session['logged_in'] = True
                 session['user_name'] = display_name
                 session['user_email'] = email
+                session['active_plan_key'] = 'monthly'
+                session['active_plan_name'] = 'Monthly Test Plan (Rs.10)'
                 return redirect(url_for('dashboard'))
 
     return render_template_string(LOGIN_HTML, error_msg=error_msg)
@@ -395,13 +590,47 @@ def login():
 def dashboard():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
+    plan_key = session.get('active_plan_key', 'monthly')
     return render_template_string(
         DASHBOARD_HTML,
         user_name=session.get('user_name', 'Creator Partner'),
         user_email=session.get('user_email', ''),
         total_referrals=session.get('total_referrals', 0),
-        referral_earnings=round(session.get('referral_earnings', 0.0), 2)
+        referral_earnings=round(session.get('referral_earnings', 0.0), 2),
+        active_plan_name=session.get('active_plan_name', 'Monthly Test Plan (Rs.10)'),
+        max_minutes=get_plan_max_minutes(plan_key)
     )
+
+
+@app.route('/purchase_plan', methods=['POST'])
+def purchase_plan():
+    payload = request.get_json(silent=True) or {}
+    plan_id = payload.get('plan_id', 'monthly_10')
+    plan_info = TEST_PLANS.get(plan_id, TEST_PLANS['monthly_10'])
+    buyer_email = (payload.get('email') or session.get('user_email') or 'buyer@example.com').strip().lower()
+    buyer_name = session.get('user_name') or buyer_email.split('@')[0].title()
+
+    session['active_plan_key'] = plan_info['plan_key']
+    session['active_plan_name'] = plan_info['name']
+    session['user_email'] = buyer_email
+
+    users = load_users()
+    if buyer_email in users:
+        users[buyer_email]['active_plan_key'] = plan_info['plan_key']
+        users[buyer_email]['active_plan_name'] = plan_info['name']
+        users[buyer_email]['last_plan_purchase_at'] = datetime.utcnow().isoformat()
+        save_users(users)
+
+    bonus_entry = dispatch_bonus_email(buyer_email, buyer_name, plan_info)
+
+    return jsonify({
+        'status': 'success',
+        'message': f"{plan_info['name']} active for {buyer_email} (Limit: less than {plan_info['max_minutes']} min).",
+        'plan_name': plan_info['name'],
+        'max_minutes': plan_info['max_minutes'],
+        'bonus_delivery_detail': bonus_entry['delivery_detail'],
+        'bonus_items': bonus_entry['bonus']['bonus_items']
+    })
 
 
 @app.route('/success')
@@ -465,12 +694,32 @@ def process_video():
         os.makedirs(UPLOAD_FOLDER, exist_ok=True)
         os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
+        plan_key = session.get('active_plan_key', 'monthly')
+        max_minutes = get_plan_max_minutes(plan_key)
+        duration_sec_raw = request.form.get('video_duration_sec', '0')
+        try:
+            duration_sec = float(duration_sec_raw or 0)
+        except ValueError:
+            duration_sec = 0.0
+
+        video_minutes = duration_sec / 60.0
+        if duration_sec > 0 and video_minutes >= max_minutes:
+            return jsonify({
+                'status': 'error',
+                'message': (
+                    f"Duration limit exceeded: video is {video_minutes:.2f} min, "
+                    f"but current plan allows less than {max_minutes} min."
+                )
+            }), 400
+
         video_file = request.files.get('video_file')
         selected = request.form.getlist('brahmastras')
         out_filename = "GOAT_Mastered_Sample.mp4"
+        source_name = "GOAT_Master_Clip.mp4"
 
         if video_file and video_file.filename:
-            clean_name = os.path.basename(video_file.filename).replace(" ", "_")
+            source_name = os.path.basename(video_file.filename)
+            clean_name = source_name.replace(" ", "_")
             out_filename = f"GOAT_Edited_{clean_name}"
             raw_path = os.path.join(UPLOAD_FOLDER, clean_name)
             out_path = os.path.join(OUTPUT_FOLDER, out_filename)
@@ -484,16 +733,11 @@ def process_video():
 
         video_url = f"/process_output/{out_filename}"
         active_tools = ", ".join(selected) if selected else "All 5 Brahmastras"
-        seo_title = "Viral Master Cut 2026 | GOAT- Automated video editing and publishing platemorms"
-        seo_description = (
-            f"Edited with {active_tools} on GOAT- Automated video editing and publishing platemorms. "
-            "Link: {LINK_PLACEHOLDER} "
-            "#GOATStudio #CreatorSaaS #ViralVideo #YouTube #Facebook #Instagram #TwitterX"
-        )
+        seo_title, seo_description = generate_unique_seo(source_name, plan_key, max_minutes, active_tools)
 
         return jsonify({
             'status': 'success',
-            'message': f'Edited video ready ({active_tools}).',
+            'message': f'Edited video ready ({active_tools} | Plan limit: less than {max_minutes} min).',
             'video_url': video_url,
             'download_url': f"{video_url}?download=1",
             'seo_title': seo_title,
