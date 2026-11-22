@@ -75,6 +75,17 @@ def get_plan_max_minutes(plan_key):
     return mapping.get(plan_key, 5)
 
 
+def normalize_plan_key(raw_plan):
+    val = (raw_plan or '').strip().lower()
+    if val in ('six_month', 'six-month', '6m', '6_month', 'half_yearly', 'pro'):
+        return 'six_month'
+    if val in ('yearly', 'annual', 'one_year', '1y', '1_year', 'creator_pass'):
+        return 'yearly'
+    if val in ('monthly', 'month', '1m', 'starter'):
+        return 'monthly'
+    return None
+
+
 def build_bonus_payload(plan_info):
     return {
         'bonus_title': 'GOAT Creator Bonus Vault',
@@ -149,6 +160,41 @@ def dispatch_bonus_email(recipient_email, recipient_name, plan_info):
     logs.append(entry)
     save_json_file(BONUS_LOGS_FILE, logs)
     return entry
+
+
+def activate_plan_and_bonus(plan_key, buyer_email=None, buyer_name=None):
+    max_minutes = get_plan_max_minutes(plan_key)
+    price_map = {'monthly': 199, 'six_month': 499, 'yearly': 999}
+    label_map = {
+        'monthly': 'Monthly Plan',
+        'six_month': '6-Month Plan',
+        'yearly': '1-Year Plan'
+    }
+    plan_info = {
+        'id': plan_key,
+        'name': label_map.get(plan_key, 'Monthly Plan'),
+        'plan_key': plan_key,
+        'price_inr': price_map.get(plan_key, 199),
+        'max_minutes': max_minutes
+    }
+
+    resolved_email = (buyer_email or session.get('user_email') or '').strip().lower()
+    resolved_name = (buyer_name or session.get('user_name') or (resolved_email.split('@')[0].title() if resolved_email else 'Creator Partner')).strip()
+
+    session['active_plan_key'] = plan_key
+    if resolved_email:
+        session['user_email'] = resolved_email
+    if resolved_name:
+        session['user_name'] = resolved_name
+
+    users = load_users()
+    if resolved_email and resolved_email in users:
+        users[resolved_email]['active_plan_key'] = plan_key
+        users[resolved_email]['last_plan_purchase_at'] = datetime.utcnow().isoformat()
+        save_users(users)
+
+    if resolved_email:
+        dispatch_bonus_email(resolved_email, resolved_name, plan_info)
 
 
 def generate_unique_seo(raw_filename, plan_key, max_minutes, active_tools):
@@ -538,6 +584,17 @@ def dashboard():
 
 @app.route('/success')
 def success():
+    raw_plan = request.args.get('plan') or request.args.get('plan_key') or request.args.get('sub') or ''
+    normalized_plan = normalize_plan_key(raw_plan)
+    buyer_email = (request.args.get('email') or request.args.get('payer_email') or '').strip().lower()
+    buyer_name = (request.args.get('name') or request.args.get('payer_name') or '').strip()
+
+    if normalized_plan:
+        activate_plan_and_bonus(normalized_plan, buyer_email=buyer_email or None, buyer_name=buyer_name or None)
+    elif buyer_email:
+        current_plan = session.get('active_plan_key', 'monthly')
+        activate_plan_and_bonus(current_plan, buyer_email=buyer_email, buyer_name=buyer_name or None)
+
     html = load_html_file('success.html')
     if html:
         return html
