@@ -21,30 +21,6 @@ BONUS_LOGS_FILE = os.path.join(BASE_DIR, 'bonus_email_logs.json')
 
 REFERRAL_COMMISSION_RATE = 0.25
 
-TEST_PLANS = {
-    'monthly_10': {
-        'id': 'monthly_10',
-        'name': 'Monthly Test Plan (Rs.10)',
-        'plan_key': 'monthly',
-        'price_inr': 10,
-        'max_minutes': 5
-    },
-    'six_month_20': {
-        'id': 'six_month_20',
-        'name': '6-Month Test Plan (Rs.20)',
-        'plan_key': 'six_month',
-        'price_inr': 20,
-        'max_minutes': 60
-    },
-    'yearly_30': {
-        'id': 'yearly_30',
-        'name': '1-Year Test Plan (Rs.30)',
-        'plan_key': 'yearly',
-        'price_inr': 30,
-        'max_minutes': 180
-    }
-}
-
 app = Flask(
     __name__,
     template_folder=TEMPLATE_DIR,
@@ -262,12 +238,6 @@ DASHBOARD_HTML = "\n".join([
     "        .ticker-inner { max-width: 1260px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }",
     "        .notif-pill { background: #172554; border-left: 4px solid #fbbf24; color: #fef08a; padding: 6px 12px; border-radius: 6px; font-size: 13px; }",
     "        .container { max-width: 1260px; margin: 0 auto; padding: 20px; }",
-    "        .plan-strip { background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }",
-    "        .plan-btns { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }",
-    "        .plan-btn { border: none; border-radius: 8px; padding: 9px 13px; font-size: 12px; font-weight: bold; color: #fff; cursor: pointer; }",
-    "        .p-10 { background: #059669; }",
-    "        .p-20 { background: #2563eb; }",
-    "        .p-30 { background: #7c3aed; }",
     "        .grid-main { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 18px; }",
     "        .card { background: #0f172a; border: 1px solid #1e293b; border-radius: 12px; padding: 18px; }",
     "        .card h2 { margin: 0 0 10px; font-size: 17px; color: #7dd3fc; }",
@@ -286,7 +256,7 @@ DASHBOARD_HTML = "\n".join([
     "        .btn-dl { background: #059669; color: #fff; }",
     "        .console-box { margin-top: 10px; padding: 10px; background: #020617; border: 1px solid #334155; border-radius: 8px; font-size: 12px; color: #a7f3d0; }",
     "        label.field-lbl { display: block; font-size: 12px; font-weight: bold; color: #cbd5e1; margin: 10px 0 4px; }",
-    "        input[type=\"file\"], input[type=\"text\"], input[type=\"email\"], textarea { width: 100%; padding: 9px 11px; border-radius: 8px; border: 1px solid #334155; background: #060b19; color: #fff; font-size: 13px; }",
+    "        input[type=\"file\"], input[type=\"text\"], textarea { width: 100%; padding: 9px 11px; border-radius: 8px; border: 1px solid #334155; background: #060b19; color: #fff; font-size: 13px; }",
     "        textarea { min-height: 80px; }",
     "        .link-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }",
     "        .link-row input { flex: 1; min-width: 180px; }",
@@ -317,21 +287,10 @@ DASHBOARD_HTML = "\n".join([
     "<div class=\"live-ticker\">",
     "    <div class=\"ticker-inner\">",
     "        <div class=\"notif-pill\" id=\"liveNotifBox\">Rajesh, Dehradun ne abhi khareeda: Annual Creator Pass (Rs.999)</div>",
-    "        <div style=\"font-size:12px;color:#94a3b8;\">Signed in: <strong>{{ user_name }}</strong> ({{ user_email }}) | Active Plan: <strong id=\"activePlanLabel\">{{ active_plan_name }}</strong> (Max: <strong id=\"activePlanLimit\">{{ max_minutes }}</strong> min)</div>",
+    "        <div style=\"font-size:12px;color:#94a3b8;\">Signed in: <strong>{{ user_name }}</strong> ({{ user_email }}) | Max Limit: <strong>{{ max_minutes }}</strong> min</div>",
     "    </div>",
     "</div>",
     "<main class=\"container\">",
-    "    <div class=\"plan-strip\">",
-    "        <div style=\"flex:1;min-width:240px;\">",
-    "            <strong style=\"color:#7dd3fc;\">Test Plan & Email Bonus Check:</strong>",
-    "            <input type=\"email\" id=\"buyerTestEmail\" value=\"{{ user_email }}\" placeholder=\"Buyer email for plan & bonus\" style=\"margin-top:6px;\">",
-    "        </div>",
-    "        <div class=\"plan-btns\">",
-    "            <button type=\"button\" class=\"plan-btn p-10\" onclick=\"buyTestPlan('monthly_10')\">Buy Monthly Rs.10 (less than 5 min)</button>",
-    "            <button type=\"button\" class=\"plan-btn p-20\" onclick=\"buyTestPlan('six_month_20')\">Buy 6-Month Rs.20 (less than 60 min)</button>",
-    "            <button type=\"button\" class=\"plan-btn p-30\" onclick=\"buyTestPlan('yearly_30')\">Buy 1-Year Rs.30 (less than 180 min)</button>",
-    "        </div>",
-    "    </div>",
     "    <div class=\"grid-main\">",
     "        <section class=\"card\">",
     "            <h2>1. Raw Video Preview & 5 Brahmastra Execution</h2>",
@@ -432,27 +391,6 @@ DASHBOARD_HTML = "\n".join([
     "        if (openRawTabLink) { openRawTabLink.href = currentRawObjectUrl; openRawTabLink.style.display = \"inline\"; }",
     "        document.getElementById(\"actionLog\").textContent = \"Raw video loaded in preview player: \" + file.name;",
     "    });",
-    "}",
-    "async function buyTestPlan(planId) {",
-    "    var log = document.getElementById(\"actionLog\");",
-    "    var emailBox = document.getElementById(\"buyerTestEmail\");",
-    "    var buyerEmail = emailBox ? emailBox.value.trim() : \"\";",
-    "    log.textContent = \"Activating test plan & bonus email...\";",
-    "    try {",
-    "        var res = await fetch(\"/purchase_plan\", {",
-    "            method: \"POST\",",
-    "            headers: { \"Content-Type\": \"application/json\" },",
-    "            body: JSON.stringify({ plan_id: planId, email: buyerEmail })",
-    "        });",
-    "        var data = await res.json();",
-    "        if (data.status === \"success\") {",
-    "            document.getElementById(\"activePlanLabel\").textContent = data.plan_name;",
-    "            document.getElementById(\"activePlanLimit\").textContent = data.max_minutes;",
-    "            log.textContent = data.message + \" | Bonus Status: \" + data.bonus_delivery_detail;",
-    "        } else {",
-    "            log.textContent = \"Plan error: \" + data.message;",
-    "        }",
-    "    } catch (e) { log.textContent = \"Plan error: \" + e.message; }",
     "}",
     "async function executeSingleBrahmastra(toolId) {",
     "    var log = document.getElementById(\"actionLog\");",
@@ -558,7 +496,6 @@ def login():
                     session['user_name'] = users[email].get('name') or name or email.split('@')[0].title()
                     session['user_email'] = email
                     session['active_plan_key'] = users[email].get('active_plan_key', 'monthly')
-                    session['active_plan_name'] = users[email].get('active_plan_name', 'Monthly Test Plan (Rs.10)')
                     users[email]['last_login'] = datetime.utcnow().isoformat()
                     save_users(users)
                     return redirect(url_for('dashboard'))
@@ -571,7 +508,6 @@ def login():
                     'email': email,
                     'password_hash': generate_password_hash(password),
                     'active_plan_key': 'monthly',
-                    'active_plan_name': 'Monthly Test Plan (Rs.10)',
                     'created_at': datetime.utcnow().isoformat(),
                     'last_login': datetime.utcnow().isoformat()
                 }
@@ -580,7 +516,6 @@ def login():
                 session['user_name'] = display_name
                 session['user_email'] = email
                 session['active_plan_key'] = 'monthly'
-                session['active_plan_name'] = 'Monthly Test Plan (Rs.10)'
                 return redirect(url_for('dashboard'))
 
     return render_template_string(LOGIN_HTML, error_msg=error_msg)
@@ -597,40 +532,8 @@ def dashboard():
         user_email=session.get('user_email', ''),
         total_referrals=session.get('total_referrals', 0),
         referral_earnings=round(session.get('referral_earnings', 0.0), 2),
-        active_plan_name=session.get('active_plan_name', 'Monthly Test Plan (Rs.10)'),
         max_minutes=get_plan_max_minutes(plan_key)
     )
-
-
-@app.route('/purchase_plan', methods=['POST'])
-def purchase_plan():
-    payload = request.get_json(silent=True) or {}
-    plan_id = payload.get('plan_id', 'monthly_10')
-    plan_info = TEST_PLANS.get(plan_id, TEST_PLANS['monthly_10'])
-    buyer_email = (payload.get('email') or session.get('user_email') or 'buyer@example.com').strip().lower()
-    buyer_name = session.get('user_name') or buyer_email.split('@')[0].title()
-
-    session['active_plan_key'] = plan_info['plan_key']
-    session['active_plan_name'] = plan_info['name']
-    session['user_email'] = buyer_email
-
-    users = load_users()
-    if buyer_email in users:
-        users[buyer_email]['active_plan_key'] = plan_info['plan_key']
-        users[buyer_email]['active_plan_name'] = plan_info['name']
-        users[buyer_email]['last_plan_purchase_at'] = datetime.utcnow().isoformat()
-        save_users(users)
-
-    bonus_entry = dispatch_bonus_email(buyer_email, buyer_name, plan_info)
-
-    return jsonify({
-        'status': 'success',
-        'message': f"{plan_info['name']} active for {buyer_email} (Limit: less than {plan_info['max_minutes']} min).",
-        'plan_name': plan_info['name'],
-        'max_minutes': plan_info['max_minutes'],
-        'bonus_delivery_detail': bonus_entry['delivery_detail'],
-        'bonus_items': bonus_entry['bonus']['bonus_items']
-    })
 
 
 @app.route('/success')
