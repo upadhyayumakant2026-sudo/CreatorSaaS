@@ -159,6 +159,7 @@ def dispatch_bonus_email(recipient_email, recipient_name, plan_info):
     }
     logs.append(entry)
     save_json_file(BONUS_LOGS_FILE, logs)
+    session['bonus_status_text'] = f"{delivery_mode} -> {recipient_email}"
     return entry
 
 
@@ -333,7 +334,7 @@ DASHBOARD_HTML = "\n".join([
     "<div class=\"live-ticker\">",
     "    <div class=\"ticker-inner\">",
     "        <div class=\"notif-pill\" id=\"liveNotifBox\">Rajesh, Dehradun ne abhi khareeda: Annual Creator Pass (Rs.999)</div>",
-    "        <div style=\"font-size:12px;color:#94a3b8;\">Signed in: <strong>{{ user_name }}</strong> ({{ user_email }}) | Max Limit: <strong>{{ max_minutes }}</strong> min</div>",
+    "        <div style=\"font-size:12px;color:#94a3b8;\">Signed in: <strong>{{ user_name }}</strong> ({{ user_email }}) | Max Limit: <strong>{{ max_minutes }}</strong> min | Bonus Status: <strong>{{ bonus_status_text }}</strong></div>",
     "    </div>",
     "</div>",
     "<main class=\"container\">",
@@ -578,7 +579,8 @@ def dashboard():
         user_email=session.get('user_email', ''),
         total_referrals=session.get('total_referrals', 0),
         referral_earnings=round(session.get('referral_earnings', 0.0), 2),
-        max_minutes=get_plan_max_minutes(plan_key)
+        max_minutes=get_plan_max_minutes(plan_key),
+        bonus_status_text=session.get('bonus_status_text', 'Pending Plan Activation')
     )
 
 
